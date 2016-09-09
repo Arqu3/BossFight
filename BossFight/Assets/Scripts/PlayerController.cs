@@ -53,6 +53,10 @@ public class PlayerController : MonoBehaviour
     public bool m_IsInvincible = false;
     float m_InvTimer = 0.0f;
 
+    //Stat vars
+    int m_Health = 100;
+    int m_Damage = 15;
+
 	//Use this for initialization
 	void Start()
 	{
@@ -233,5 +237,20 @@ public class PlayerController : MonoBehaviour
             m_IsInvincible = true;
             m_InvTimer = time;
         }
+    }
+
+    public Vector2 GetPosition()
+    {
+        return transform.position;
+    }
+
+    public int GetHealth()
+    {
+        return m_Health;
+    }
+
+    public int GetDamage()
+    {
+        return m_Damage;
     }
 }
