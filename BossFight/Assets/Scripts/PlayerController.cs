@@ -253,4 +253,9 @@ public class PlayerController : MonoBehaviour
     {
         return m_Damage;
     }
+
+    public void ChangeHealth(int value)
+    {
+        m_Health += value;
+    }
 }

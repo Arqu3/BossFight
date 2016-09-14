@@ -133,11 +133,30 @@ public struct Action
     }
 }
 
+public enum ActionState
+{
+    None,
+    Moving,
+    Charging,
+    Attacking,
+}
+
 public class BossController : MonoBehaviour
 {
-    public List<Action> m_Actions = new List<Action>();
+    //Public vars
+    //public List<Action> m_Actions = new List<Action>();
+    public ActionState m_State = ActionState.None;
+    public int m_Health = 500;
+    public int m_Damage = 20;
+    public float m_MovementSpeed = 8.0f;
+    public float m_TurnSpeed = 4.0f;
+    public float m_AttackRange = 5.0f;
+    public float m_ChargeRange = 20.0f;
 
+    //Component vars
 	PlayerController m_Player;
+
+
 
 	// Use this for initialization
 	void Start()
@@ -148,14 +167,24 @@ public class BossController : MonoBehaviour
 	// Update is called once per frame
 	void Update()
     {
-         for (int i = 0; i < m_Actions.Count; i++)
-        {
-            m_Actions[i].Update();
-        }
+        // for (int i = 0; i < m_Actions.Count; i++)
+        //{
+        //    m_Actions[i].Update();
+        //}
 	}
+
+    void CheckState()
+    {
+
+    }
 
     public Vector2 GetPosition()
     {
         return transform.position;
+    }
+
+    public float CheckDistance(float value)
+    {
+        return Vector2.Distance(m_Player.transform.position, transform.position);
     }
 }
