@@ -5,7 +5,7 @@ public class CameraFollowPlayer : MonoBehaviour
 {
 
     Transform m_FollowTransform;
-    Vector2 m_Position;
+    Vector3 m_Position;
 
 	// Use this for initialization
 	void Start()
@@ -17,6 +17,6 @@ public class CameraFollowPlayer : MonoBehaviour
 	void Update()
     {
         m_Position = m_FollowTransform.position;
-        transform.position = new Vector3(m_Position.x, m_Position.y, -10);
+        transform.position = new Vector3(m_Position.x, 10, m_Position.z);
 	}
 }

@@ -25,10 +25,10 @@ public class PlayerController : MonoBehaviour
     public float m_BreakHookDist = 2.0f;
     
     //Component vars
-	Rigidbody2D m_Rigidbody;
+	Rigidbody m_Rigidbody;
 
     //Movement vars
-    Vector2 m_Velocity;
+    Vector3 m_Velocity;
 
     //Rotation vars
     Transform m_PointerTransform;
@@ -38,15 +38,15 @@ public class PlayerController : MonoBehaviour
     bool m_IsDashCD = false;
     float m_DashTimer = 0.0f;
     float m_CurDashCD;
-    Vector2 m_DashDir;
+    Vector3 m_DashDir;
 
     //Hook vars
     bool m_IsHooked = false;
     bool m_IsHookCD = false;
     float m_CurHookCD;
-    Vector2 m_HookDir;
-    Vector2 m_HookHitPos;
-    RaycastHit2D m_HookHit;
+    Vector3 m_HookDir;
+    Vector3 m_HookHitPos;
+    RaycastHit m_HookHit;
     public LayerMask m_HookMask;
 
     //Invincible vars
@@ -65,7 +65,7 @@ public class PlayerController : MonoBehaviour
 
         m_State = MovementState.Idle;
 
-		m_Rigidbody = GetComponent<Rigidbody2D>();
+		m_Rigidbody = GetComponent<Rigidbody>();
         m_PointerTransform = GameObject.FindGameObjectWithTag("PlayerRotation").transform;
 	}
 	
@@ -89,7 +89,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(m_PointerTransform.position);
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+        m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
     }
 
     void InvincibleUpdate()
@@ -109,8 +109,8 @@ public class PlayerController : MonoBehaviour
     {
         if (IsMoving())
         {
-            m_Velocity = new Vector2(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_MovementSpeed, 1f), Mathf.Lerp(0, Input.GetAxis("Vertical") * m_MovementSpeed, 1f));
-            m_Rigidbody.velocity = Vector2.ClampMagnitude(m_Velocity, m_MovementSpeed);
+            m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_MovementSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_MovementSpeed, 1f));
+            m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_MovementSpeed);
         }
         //Debug.Log(m_Rigidbody.velocity.magnitude);
     }
@@ -122,6 +122,7 @@ public class PlayerController : MonoBehaviour
             m_IsDashCD = true;
             m_IsDashing = true;
             m_DashDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
+            m_DashDir.y = 0;
             SetInvincible(m_DashTime);
         }
 
@@ -150,20 +151,21 @@ public class PlayerController : MonoBehaviour
 
     void HookUpdate()
     {
+        //Vector3 temp1 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        //Debug.DrawRay(transform.position, (new Vector3(temp1.x, 0, temp1.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized * m_HookDistance);
         if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD)
         {
             m_IsHookCD = true;
             Vector3 temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            //Debug.DrawRay(transform.position, (new Vector3(temp.x, temp.y, 0) - transform.position).normalized * m_HookDistance, Color.red);
-            m_HookHit = Physics2D.Raycast(transform.position, (new Vector3(temp.x, temp.y, 0) - transform.position).normalized, m_HookDistance, m_HookMask);
 
-            if (m_HookHit.collider != null)
+            if (Physics.Raycast(transform.position, (new Vector3(temp.x, 0, temp.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized, out m_HookHit, m_HookDistance, m_HookMask))
             {
                 if (m_HookHit.collider.gameObject.tag != "Player")
                 {
                     SetInvincible(0.5f);
                     m_HookHitPos = m_HookHit.point;
                     m_HookDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
+                    m_HookDir.y = 0;
                     m_IsHooked = true;
                 }
             }
@@ -171,7 +173,7 @@ public class PlayerController : MonoBehaviour
 
         if (m_IsHooked)
         {
-            if (Vector2.Distance(transform.position, m_HookHitPos) > m_BreakHookDist)
+            if (Vector3.Distance(transform.position, m_HookHitPos) > m_BreakHookDist)
             {
                 m_Rigidbody.velocity = m_HookDir.normalized * m_HookSpeed;
             }
@@ -211,8 +213,8 @@ public class PlayerController : MonoBehaviour
         }
         else if (m_Velocity.magnitude < 2)
         {
-            m_Rigidbody.velocity = Vector2.zero;
-            m_Velocity = Vector2.zero;
+            m_Rigidbody.velocity = Vector3.zero;
+            m_Velocity = Vector3.zero;
             SetState(MovementState.Idle);
         }
     }
@@ -257,5 +259,15 @@ public class PlayerController : MonoBehaviour
     public void ChangeHealth(int value)
     {
         m_Health += value;
+    }
+
+    public bool GetIsHookReady()
+    {
+        return !m_IsHookCD;
+    }
+
+    public float[] GetCooldowns()
+    {
+        return new float[] { m_CurHookCD, m_CurDashCD };
     }
 }
