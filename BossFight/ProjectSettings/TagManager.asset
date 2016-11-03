@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - PlayerRotation
+  - Enemy
   layers:
   - Default
   - TransparentFX

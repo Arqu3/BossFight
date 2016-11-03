@@ -23,7 +23,12 @@ public class PlayerController : MonoBehaviour
     public float m_HookDistance = 20.0f;
     public float m_HookSpeed = 15.0f;
     public float m_BreakHookDist = 2.0f;
-    
+
+    public int m_StartHP = 100;
+    public int m_StartDMG = 15;
+
+    public float m_AttackSpeed = 1.0f;
+        
     //Component vars
 	Rigidbody m_Rigidbody;
 
@@ -54,12 +59,23 @@ public class PlayerController : MonoBehaviour
     float m_InvTimer = 0.0f;
 
     //Stat vars
-    int m_Health = 100;
-    int m_Damage = 15;
+    static int m_Health;
+    static int m_Damage;
+
+    //Attack vars
+    bool m_CanAttack = true;
+    float m_AttackTimer = 0.0f;
+    GameObject m_AttackBox;
+    public static float m_BoxTimer = 0.3f;
+    float m_CurBoxTimer = 0.0f;
+    bool m_IsAttackActive = false;
 
 	//Use this for initialization
 	void Start()
 	{
+        m_Health = m_StartHP;
+        m_Damage = m_StartDMG;
+
         m_CurDashCD = m_DashCD;
         m_CurHookCD = m_HookCD;
 
@@ -67,6 +83,10 @@ public class PlayerController : MonoBehaviour
 
 		m_Rigidbody = GetComponent<Rigidbody>();
         m_PointerTransform = GameObject.FindGameObjectWithTag("PlayerRotation").transform;
+        m_AttackBox = GameObject.Find("HitCollider");
+
+        if (m_AttackBox)
+            m_AttackBox.SetActive(false);
 	}
 	
 	//Update is called once per frame
@@ -83,13 +103,16 @@ public class PlayerController : MonoBehaviour
         RotationUpdate();
 
         InvincibleUpdate();
+
+        AttackUpdate();
     }
 
     void RotationUpdate()
     {
         Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(m_PointerTransform.position);
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
+        if (!m_IsAttackActive)
+            m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
     }
 
     void InvincibleUpdate()
@@ -97,7 +120,7 @@ public class PlayerController : MonoBehaviour
         if (m_IsInvincible)
         {
             m_InvTimer -= Time.deltaTime;
-            if (m_InvTimer < 0.0f)
+            if (m_InvTimer <= 0.0f)
             {
                 m_InvTimer = 0.0f;
                 m_IsInvincible = false;
@@ -107,11 +130,13 @@ public class PlayerController : MonoBehaviour
 
     void MovementUpdate()
     {
-        if (IsMoving())
+        if (IsMoving() && !m_IsAttackActive)
         {
             m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_MovementSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_MovementSpeed, 1f));
             m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_MovementSpeed);
         }
+        else
+            m_Rigidbody.velocity = Vector3.zero;
         //Debug.Log(m_Rigidbody.velocity.magnitude);
     }
 
@@ -121,8 +146,9 @@ public class PlayerController : MonoBehaviour
         {
             m_IsDashCD = true;
             m_IsDashing = true;
-            m_DashDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
-            m_DashDir.y = 0;
+            //m_DashDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
+            //m_DashDir.y = 0;
+            m_DashDir = m_Velocity;
             SetInvincible(m_DashTime);
         }
 
@@ -153,7 +179,7 @@ public class PlayerController : MonoBehaviour
     {
         //Vector3 temp1 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         //Debug.DrawRay(transform.position, (new Vector3(temp1.x, 0, temp1.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized * m_HookDistance);
-        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD)
+        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttackActive)
         {
             m_IsHookCD = true;
             Vector3 temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -241,22 +267,58 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public Vector2 GetPosition()
+    public Vector3 GetPosition()
     {
         return transform.position;
     }
 
-    public int GetHealth()
+    void AttackUpdate()
+    {
+        if (Input.GetMouseButton(0))
+        {
+            if (m_CanAttack)
+            {
+                m_CanAttack = false;
+                if (m_AttackTimer == 0.0f)
+                {
+                    m_AttackBox.SetActive(true);
+                    m_IsAttackActive = true;
+                }
+            }
+        }
+
+        if (!m_CanAttack)
+        {
+            m_AttackTimer += Time.deltaTime;
+            if (m_AttackTimer >= m_AttackSpeed)
+            {
+                m_CanAttack = true;
+                m_AttackTimer = 0.0f;
+            }
+        }
+
+        if (m_AttackBox.activeSelf)
+            m_CurBoxTimer += Time.deltaTime;
+
+        if (m_CurBoxTimer >= m_BoxTimer)
+        {
+            m_IsAttackActive = false;
+            m_CurBoxTimer = 0.0f;
+            m_AttackBox.SetActive(false);
+        }
+    }
+
+    public static int GetHealth()
     {
         return m_Health;
     }
 
-    public int GetDamage()
+    public static int GetDamage()
     {
         return m_Damage;
     }
 
-    public void ChangeHealth(int value)
+    public static void ChangeHealth(int value)
     {
         m_Health += value;
     }
