@@ -133,6 +133,7 @@ public class PlayerController : MonoBehaviour
         if (IsMoving() && !m_IsAttackActive)
         {
             m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_MovementSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_MovementSpeed, 1f));
+            //m_Velocity = new Vector3(Input.GetAxis("Horizontal") * m_MovementSpeed, 0, Input.GetAxis("Vertical") * m_MovementSpeed);
             m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_MovementSpeed);
         }
         else

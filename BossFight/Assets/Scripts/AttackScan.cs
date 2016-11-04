@@ -27,7 +27,10 @@ public class AttackScan : MonoBehaviour
     {
         if (col.gameObject.tag == "Enemy")
         {
-            Debug.Log("Dealt: " + PlayerController.GetDamage() + " damage");
+            if (col.gameObject.GetComponent<EnemyStats>())
+            {
+                col.gameObject.GetComponent<EnemyStats>().ChangeHealth(-PlayerController.GetDamage());
+            }
         }
     }
 }
