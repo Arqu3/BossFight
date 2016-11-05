@@ -31,6 +31,7 @@ public class PlayerController : MonoBehaviour
         
     //Component vars
 	Rigidbody m_Rigidbody;
+    NavMeshAgent m_Agent;
 
     //Movement vars
     Vector3 m_Velocity;
@@ -62,28 +63,38 @@ public class PlayerController : MonoBehaviour
     static int m_Health;
     static int m_Damage;
 
+    //Healthbar vars
+    Healthbar m_Healthbar;
+
     //Attack vars
     bool m_CanAttack = true;
     float m_AttackTimer = 0.0f;
     GameObject m_AttackBox;
-    public static float m_BoxTimer = 0.3f;
+    public static float m_BoxTimer = 0.2f;
     float m_CurBoxTimer = 0.0f;
     bool m_IsAttackActive = false;
+
+    void Awake()
+    {
+        m_Health = m_StartHP;
+        m_Damage = m_StartDMG;
+    }
 
 	//Use this for initialization
 	void Start()
 	{
-        m_Health = m_StartHP;
-        m_Damage = m_StartDMG;
-
         m_CurDashCD = m_DashCD;
         m_CurHookCD = m_HookCD;
 
         m_State = MovementState.Idle;
 
 		m_Rigidbody = GetComponent<Rigidbody>();
-        m_PointerTransform = GameObject.FindGameObjectWithTag("PlayerRotation").transform;
-        m_AttackBox = GameObject.Find("HitCollider");
+        m_PointerTransform = transform.FindChild("Rotation");
+        m_AttackBox = m_PointerTransform.FindChild("HitCollider").gameObject;
+        m_Healthbar = GetComponentInChildren<Healthbar>();
+        m_Agent = GetComponent<NavMeshAgent>();
+        m_Agent.updateRotation = false;
+        //m_Agent.updatePosition = false;
 
         if (m_AttackBox)
             m_AttackBox.SetActive(false);
@@ -319,9 +330,21 @@ public class PlayerController : MonoBehaviour
         return m_Damage;
     }
 
-    public static void ChangeHealth(int value)
+    public void ChangeHealth(int value)
     {
-        m_Health += value;
+        if (m_Health > 1 && m_Health <= m_StartHP)
+        {
+            m_Health += value;
+            if (m_Health > m_StartHP)
+                m_Health = m_StartHP;
+
+            if (m_Health < 1)
+            {
+                //Player is dead;
+            }
+
+            m_Healthbar.ChangeScale(value);
+        }
     }
 
     public bool GetIsHookReady()

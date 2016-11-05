@@ -1,14 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+public enum Mode
+{
+    Enemy,
+    Player
+};
+
 public class Healthbar : MonoBehaviour
 {
+    //Public vars
+    public Mode m_Mode = Mode.Enemy;
+
     //Bar vars
     GameObject m_Slider;
     GameObject m_Background;
 
     //Component vars
-    EnemyStats m_Stats;
+    EnemyStats m_EnemyStats;
     float m_ScaleFactor;
 
 	void Start ()
@@ -18,23 +27,26 @@ public class Healthbar : MonoBehaviour
 
         m_Slider.transform.localScale = m_Background.transform.localScale;
 
-        m_Stats = transform.parent.GetComponent<EnemyStats>();
+        m_EnemyStats = transform.parent.GetComponent<EnemyStats>();
 
-        if (!m_Stats)
-            Debug.Log("Healthbar could not find stats!");
+        if (m_EnemyStats)
+        {
+            m_ScaleFactor = m_Background.transform.localScale.x / m_EnemyStats.GetHealth();
+            m_Mode = Mode.Enemy;
+        }
+        else if (transform.parent.tag == "Player")
+        {
+            m_ScaleFactor = m_Background.transform.localScale.x / PlayerController.GetHealth();
+            m_Mode = Mode.Player;
+        }
         else
-            m_ScaleFactor = m_Background.transform.localScale.x / m_Stats.GetHealth();
+            Debug.Log("Healthbar could not find stats!");
     }
-	
-	void Update ()
+
+    void Update()
     {
-        //if (m_Slider.transform.localPosition.x > -m_Background.transform.localScale.x / 2)
-        //{
-        //    m_Slider.transform.localPosition -= new Vector3(1f / 2f, 0, 0) * Time.deltaTime;
-        //    m_Slider.transform.localScale -= new Vector3(1f, 0, 0) * Time.deltaTime;
-        //}
-        //ChangeHealth(-1 * Time.deltaTime);
-	}
+
+    }
 
     public void ChangeScale(float value)
     {
@@ -44,7 +56,8 @@ public class Healthbar : MonoBehaviour
         {
             m_Slider.transform.localPosition += new Vector3(f / 2f, 0, 0);
             m_Slider.transform.localScale += new Vector3(f, 0, 0);
-            m_Slider.transform.localScale = new Vector3(Mathf.Clamp(m_Slider.transform.localScale.x, 0f, m_Background.transform.localScale.x), m_Slider.transform.localScale.y, m_Slider.transform.localScale.z);
+            m_Slider.transform.localScale = new Vector3(Mathf.Clamp(m_Slider.transform.localScale.x, 0f, m_Background.transform.localScale.x), 
+                m_Slider.transform.localScale.y, m_Slider.transform.localScale.z);
         }
     }
 }

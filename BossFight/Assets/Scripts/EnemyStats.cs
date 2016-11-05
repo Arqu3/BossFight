@@ -23,11 +23,6 @@ public class EnemyStats : MonoBehaviour
         m_StartHealth = m_Health;
     }
 
-    void Update()
-    {
-
-    }
-
     public void SetDamage(int val)
     {
         m_Damage = val;
@@ -44,6 +39,12 @@ public class EnemyStats : MonoBehaviour
             m_Health += val;
             if (m_Health > m_StartHealth)
                 m_Health = m_StartHealth;
+
+            if (m_Health < 1)
+            {
+                //What happens when entity dies
+                //Destroy(this.gameObject);
+            }
 
             m_Healthbar.ChangeScale(val);
         }
