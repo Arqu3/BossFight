@@ -6,6 +6,11 @@ public class EnemyStats : MonoBehaviour
     //Public vars
     public int m_Health = 100;
     public int m_Damage = 10;
+    public float m_MovementSpeed = 8.0f;
+    public float m_AttackSpeed = 1.0f;
+    public float m_AttackTime = 0.4f;
+    public float m_AggroRange = 10.0f;
+    public float m_AttackRange = 2.0f;
 
     //Health vars
     int m_StartHealth;
@@ -46,7 +51,8 @@ public class EnemyStats : MonoBehaviour
                 //Destroy(this.gameObject);
             }
 
-            m_Healthbar.ChangeScale(val);
+            if (m_Healthbar)
+                m_Healthbar.ChangeScale(val);
         }
     }
     public void SetHealth(int val)
@@ -56,5 +62,28 @@ public class EnemyStats : MonoBehaviour
     public int GetHealth()
     {
         return m_Health;
+    }
+
+    public float GetMovementSpeed()
+    {
+        return m_MovementSpeed;
+    }
+
+    public float GetAttackSpeed()
+    {
+        return m_AttackSpeed;
+    }
+    public float GetAttackTime()
+    {
+        return m_AttackTime;
+    }
+
+    public float GetAggroRange()
+    {
+        return m_AggroRange;
+    }
+    public float GetAttackRange()
+    {
+        return m_AttackRange;
     }
 }

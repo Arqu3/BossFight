@@ -70,8 +70,8 @@ public class PlayerController : MonoBehaviour
     bool m_CanAttack = true;
     float m_AttackTimer = 0.0f;
     GameObject m_AttackBox;
-    public static float m_BoxTimer = 0.2f;
-    float m_CurBoxTimer = 0.0f;
+    public static float m_AttackTime = 0.2f;
+    float m_CurAttackTime = 0.0f;
     bool m_IsAttackActive = false;
 
     void Awake()
@@ -90,11 +90,10 @@ public class PlayerController : MonoBehaviour
 
 		m_Rigidbody = GetComponent<Rigidbody>();
         m_PointerTransform = transform.FindChild("Rotation");
-        m_AttackBox = m_PointerTransform.FindChild("HitCollider").gameObject;
+        m_AttackBox = m_PointerTransform.FindChild("Hit").gameObject;
         m_Healthbar = GetComponentInChildren<Healthbar>();
         m_Agent = GetComponent<NavMeshAgent>();
         m_Agent.updateRotation = false;
-        //m_Agent.updatePosition = false;
 
         if (m_AttackBox)
             m_AttackBox.SetActive(false);
@@ -124,6 +123,8 @@ public class PlayerController : MonoBehaviour
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         if (!m_IsAttackActive)
             m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
+
+        //m_PointerTransform.Rotate(90, 0, 0);
     }
 
     void InvincibleUpdate()
@@ -310,12 +311,12 @@ public class PlayerController : MonoBehaviour
         }
 
         if (m_AttackBox.activeSelf)
-            m_CurBoxTimer += Time.deltaTime;
+            m_CurAttackTime += Time.deltaTime;
 
-        if (m_CurBoxTimer >= m_BoxTimer)
+        if (m_CurAttackTime >= m_AttackTime)
         {
             m_IsAttackActive = false;
-            m_CurBoxTimer = 0.0f;
+            m_CurAttackTime = 0.0f;
             m_AttackBox.SetActive(false);
         }
     }
