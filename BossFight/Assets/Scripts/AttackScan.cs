@@ -51,13 +51,16 @@ public class AttackScan : MonoBehaviour
             if (col.gameObject.GetComponent<EntityStats>() != m_Stats)
             {
                 if (m_Stats.gameObject.tag != col.gameObject.tag)
+                {
                     col.gameObject.GetComponent<EntityStats>().ChangeHealth(-m_Stats.GetDamage());
+
+                    if (col.gameObject.GetComponent<EntityStats>().GetCanBeKnockedback())
+                    {
+                        Vector3 force = (col.gameObject.transform.position - m_Stats.gameObject.transform.position).normalized * m_Stats.GetKnockbackForce();
+                        col.gameObject.GetComponent<Rigidbody>().AddForce(force, ForceMode.Impulse);
+                    }
+                }
             }
         }
-    }
-
-    void OnTriggerExit(Collider col)
-    {
-
     }
 }

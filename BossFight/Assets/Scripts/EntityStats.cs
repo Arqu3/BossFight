@@ -11,7 +11,10 @@ public class EntityStats : MonoBehaviour
     public float m_AttackTime = 0.4f;
     public float m_AggroRange = 10.0f;
     public float m_AttackRange = 2.0f;
+    public float m_KnockbackForce = 3.0f;
+    public bool m_CanBeKnockedback = true;
     public float m_DamagedTimer = 0.2f;
+    public bool m_CanDie = true;
 
     //Health vars
     int m_CurHealth;
@@ -84,10 +87,15 @@ public class EntityStats : MonoBehaviour
             if (m_CurHealth > m_Health)
                 m_CurHealth = m_Health;
 
-            if (m_CurHealth < 1)
+            if (m_CurHealth < 1 && GetCanDie())
             {
-                //What happens when entity dies
-                //Destroy(this.gameObject);
+                if (gameObject.tag == "Enemy")
+                {
+                    SceneController.m_CurrentEnemyAmount--;
+                    Destroy(this.gameObject);
+                }
+                else if (gameObject.tag == "Player")
+                    Debug.Log("Player is dead!");
             }
 
             if (m_Healthbar)
@@ -99,10 +107,15 @@ public class EntityStats : MonoBehaviour
     public void SetHealth(int val)
     {
         m_CurHealth = val;
+        m_Healthbar.SetScale(val);
     }
     public int GetHealth()
     {
         return m_CurHealth;
+    }
+    public int GetMaxHealth()
+    {
+        return m_Health;
     }
 
     public float GetMovementSpeed()
@@ -126,5 +139,31 @@ public class EntityStats : MonoBehaviour
     public float GetAttackRange()
     {
         return m_AttackRange;
+    }
+
+    public float GetKnockbackForce()
+    {
+        return m_KnockbackForce;
+    }
+    public bool GetCanBeKnockedback()
+    {
+        return m_CanBeKnockedback;
+    }
+    public void ToggleKnockback()
+    {
+        m_CanBeKnockedback = !m_CanBeKnockedback;
+    }
+    public void SetKnockback(bool state)
+    {
+        m_CanBeKnockedback = state;
+    }
+
+    public bool GetCanDie()
+    {
+        return m_CanDie;
+    }
+    public void SetCanDie(bool state)
+    {
+        m_CanDie = state;
     }
 }

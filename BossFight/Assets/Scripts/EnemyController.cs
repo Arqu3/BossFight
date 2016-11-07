@@ -10,6 +10,9 @@ public class EnemyController : MonoBehaviour
     EntityStats m_Stats;
     NavMeshAgent m_Agent;
 
+    //Position vars
+    Vector3 m_MoveToPosition;
+
     //Rotation vars
     Transform m_Rotation;
 
@@ -35,6 +38,13 @@ public class EnemyController : MonoBehaviour
         m_AttackObj = m_Rotation.transform.FindChild("Hit").gameObject;
         if (m_AttackObj)
             m_AttackObj.SetActive(false);
+
+        if (transform.rotation.eulerAngles.x != 90)
+            transform.rotation = Quaternion.Euler(new Vector3(90, 0, 0));
+
+        if (!m_Target)
+            SetTarget(GameObject.Find("Player").transform);
+        m_MoveToPosition = transform.position;
 	}
 	
 	void Update ()
@@ -48,8 +58,11 @@ public class EnemyController : MonoBehaviour
         {
             if (IsInAggroRange())
             {
-                m_Agent.SetDestination(m_Target.position);
-                RotateTowards(m_Target);
+                if (!m_IsAttackActive)
+                {
+                    RotateTowards(m_Target);
+                    m_Agent.SetDestination(m_Target.position);
+                }
 
                 if (IsInAttackRange())
                 {
@@ -59,6 +72,10 @@ public class EnemyController : MonoBehaviour
                 {
                     AttackUpdate();
                 }
+            }
+            else
+            {
+                MoveToUpdate();
             }
         }
     }
@@ -96,11 +113,6 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    void ResetAttack()
-    {
-
-    }
-
     bool IsInAggroRange()
     {
         return Vector3.Distance(transform.position, m_Target.position) <= m_Stats.GetAggroRange();
@@ -116,6 +128,24 @@ public class EnemyController : MonoBehaviour
         dir.y = 0;
         Quaternion rot = Quaternion.LookRotation(dir);
         m_Rotation.rotation = rot;
+        //m_Rotation.localRotation = Quaternion.Lerp(m_Rotation.localRotation, Quaternion.FromToRotation(transform.position, dir), 1.0f * Time.deltaTime);
         m_Rotation.Rotate(90, 0, 0);
+    }
+
+    void MoveToUpdate()
+    {
+        if (Vector3.Distance(transform.position, m_MoveToPosition) > 2)
+            m_Agent.SetDestination(m_MoveToPosition);
+        else
+        {
+            NavMeshHit hit;
+            NavMesh.SamplePosition(new Vector3(Random.Range(SceneController.m_MinX, SceneController.m_MaxX), 0, Random.Range(SceneController.m_MinZ, SceneController.m_MaxZ)), out hit, 10, 1);
+            m_MoveToPosition = hit.position;
+        }
+    }
+
+    public void SetTarget(Transform target)
+    {
+        m_Target = target;
     }
 }

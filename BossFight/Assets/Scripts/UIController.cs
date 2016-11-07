@@ -15,7 +15,7 @@ public class UIController : MonoBehaviour
 	void Start ()
     {
         m_Player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
-        m_PlayerHealthbar = m_Player.GetComponentInChildren<Healthbar>();
+        m_PlayerHealthbar = m_Player.transform.FindChild("Healthbar").GetComponent<Healthbar>();
 
         float offsetX = 0.5f;
         float offsetY = 0.5f;

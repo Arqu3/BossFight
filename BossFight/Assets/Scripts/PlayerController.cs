@@ -22,14 +22,18 @@ public class PlayerController : MonoBehaviour
     public float m_HookDistance = 20.0f;
     public float m_HookSpeed = 15.0f;
     public float m_BreakHookDist = 2.0f;
+
+    public float m_MaxCharge = 3.0f;
             
     //Component vars
 	Rigidbody m_Rigidbody;
     NavMeshAgent m_Agent;
     EntityStats m_Stats;
+    Healthbar m_Chargebar;
 
     //Movement vars
     Vector3 m_Velocity;
+    float m_CurSpeed;
 
     //Rotation vars
     Transform m_PointerTransform;
@@ -61,6 +65,10 @@ public class PlayerController : MonoBehaviour
     float m_CurAttackTime = 0.0f;
     bool m_IsAttackActive = false;
 
+    //Charge vars
+    float m_CurCharge = 0.0f;
+    bool m_IsCharging = false;
+
 	//Use this for initialization
 	void Start()
 	{
@@ -75,9 +83,20 @@ public class PlayerController : MonoBehaviour
         m_Agent = GetComponent<NavMeshAgent>();
         m_Agent.updateRotation = false;
         m_Stats = GetComponent<EntityStats>();
+        m_Chargebar = transform.FindChild("Chargebar").GetComponent<Healthbar>();
+
+        if (m_Chargebar)
+        {
+            m_Chargebar.SetScale(0);
+            m_Chargebar.gameObject.SetActive(false);
+        }
+        else
+            Debug.Log("Player could not find chargebar!");
 
         if (m_AttackObj)
             m_AttackObj.SetActive(false);
+
+        m_CurSpeed = m_Stats.GetMovementSpeed();
 	}
 	
 	//Update is called once per frame
@@ -96,6 +115,8 @@ public class PlayerController : MonoBehaviour
         InvincibleUpdate();
 
         AttackUpdate();
+
+        ChargeUpdate();
     }
 
     void RotationUpdate()
@@ -125,9 +146,9 @@ public class PlayerController : MonoBehaviour
     {
         if (IsMoving() && !m_IsAttackActive)
         {
-            m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_Stats.GetMovementSpeed(), 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_Stats.GetMovementSpeed(), 1f));
+            m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_CurSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_CurSpeed, 1f));
             //m_Velocity = new Vector3(Input.GetAxis("Horizontal") * m_MovementSpeed, 0, Input.GetAxis("Vertical") * m_MovementSpeed);
-            m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_Stats.GetMovementSpeed());
+            m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_CurSpeed);
         }
         else
             m_Rigidbody.velocity = Vector3.zero;
@@ -136,7 +157,7 @@ public class PlayerController : MonoBehaviour
 
     void DashUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && !m_IsDashCD)
+        if (Input.GetKeyDown(KeyCode.Space) && !m_IsDashCD && !m_IsAttackActive && !m_IsCharging)
         {
             m_IsDashCD = true;
             m_IsDashing = true;
@@ -173,7 +194,7 @@ public class PlayerController : MonoBehaviour
     {
         //Vector3 temp1 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         //Debug.DrawRay(transform.position, (new Vector3(temp1.x, 0, temp1.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized * m_HookDistance);
-        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttackActive)
+        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttackActive && !m_IsCharging)
         {
             m_IsHookCD = true;
             Vector3 temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -209,6 +230,37 @@ public class PlayerController : MonoBehaviour
                 m_CurHookCD = m_HookCD;
                 m_IsHookCD = false;
             }
+        }
+    }
+
+    void ChargeUpdate()
+    {
+        if (Input.GetMouseButton(1) && m_CurCharge < m_MaxCharge)
+        {
+            m_Chargebar.gameObject.SetActive(true);
+
+            m_IsCharging = true;
+
+            m_CurCharge += Time.deltaTime;
+
+            m_Chargebar.ChangeScale(Time.deltaTime / m_MaxCharge);
+
+            m_CurSpeed = m_Stats.GetMovementSpeed() / 2;
+        }
+        else if (Input.GetMouseButtonUp(1) && m_CurCharge > 0.0f)
+        {
+            if (m_CurCharge > m_MaxCharge)
+                m_CurCharge = m_MaxCharge;
+
+            m_CurCharge = 0.0f;
+
+            m_IsCharging = false;
+
+            m_Chargebar.SetScale(0);
+
+            m_Chargebar.gameObject.SetActive(false);
+
+            m_CurSpeed = m_Stats.GetMovementSpeed();
         }
     }
 
@@ -301,23 +353,6 @@ public class PlayerController : MonoBehaviour
             m_AttackObj.SetActive(false);
         }
     }
-
-    //public void ChangeHealth(int value)
-    //{
-    //    if (m_Health > 1 && m_Health <= m_StartHP)
-    //    {
-    //        m_Health += value;
-    //        if (m_Health > m_StartHP)
-    //            m_Health = m_StartHP;
-
-    //        if (m_Health < 1)
-    //        {
-    //            //Player is dead;
-    //        }
-
-    //        m_Healthbar.ChangeScale(value);
-    //    }
-    //}
 
     public bool GetIsHookReady()
     {
