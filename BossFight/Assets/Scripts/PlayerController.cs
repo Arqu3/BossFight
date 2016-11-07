@@ -13,7 +13,6 @@ public class PlayerController : MonoBehaviour
 {
     //Public vars
     public MovementState m_State;
-    public float m_MovementSpeed = 10.0f;
 
     public float m_DashCD = 1.0f;
     public float m_DashTime = 0.5f;
@@ -23,15 +22,11 @@ public class PlayerController : MonoBehaviour
     public float m_HookDistance = 20.0f;
     public float m_HookSpeed = 15.0f;
     public float m_BreakHookDist = 2.0f;
-
-    public int m_StartHP = 100;
-    public int m_StartDMG = 15;
-
-    public float m_AttackSpeed = 1.0f;
-        
+            
     //Component vars
 	Rigidbody m_Rigidbody;
     NavMeshAgent m_Agent;
+    EntityStats m_Stats;
 
     //Movement vars
     Vector3 m_Velocity;
@@ -59,26 +54,12 @@ public class PlayerController : MonoBehaviour
     public bool m_IsInvincible = false;
     float m_InvTimer = 0.0f;
 
-    //Stat vars
-    static int m_Health;
-    static int m_Damage;
-
-    //Healthbar vars
-    Healthbar m_Healthbar;
-
     //Attack vars
     bool m_CanAttack = true;
     float m_AttackTimer = 0.0f;
-    GameObject m_AttackBox;
-    public static float m_AttackTime = 0.2f;
+    GameObject m_AttackObj;
     float m_CurAttackTime = 0.0f;
     bool m_IsAttackActive = false;
-
-    void Awake()
-    {
-        m_Health = m_StartHP;
-        m_Damage = m_StartDMG;
-    }
 
 	//Use this for initialization
 	void Start()
@@ -90,13 +71,13 @@ public class PlayerController : MonoBehaviour
 
 		m_Rigidbody = GetComponent<Rigidbody>();
         m_PointerTransform = transform.FindChild("Rotation");
-        m_AttackBox = m_PointerTransform.FindChild("Hit").gameObject;
-        m_Healthbar = GetComponentInChildren<Healthbar>();
+        m_AttackObj = m_PointerTransform.FindChild("Hit").gameObject;
         m_Agent = GetComponent<NavMeshAgent>();
         m_Agent.updateRotation = false;
+        m_Stats = GetComponent<EntityStats>();
 
-        if (m_AttackBox)
-            m_AttackBox.SetActive(false);
+        if (m_AttackObj)
+            m_AttackObj.SetActive(false);
 	}
 	
 	//Update is called once per frame
@@ -144,9 +125,9 @@ public class PlayerController : MonoBehaviour
     {
         if (IsMoving() && !m_IsAttackActive)
         {
-            m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_MovementSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_MovementSpeed, 1f));
+            m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_Stats.GetMovementSpeed(), 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_Stats.GetMovementSpeed(), 1f));
             //m_Velocity = new Vector3(Input.GetAxis("Horizontal") * m_MovementSpeed, 0, Input.GetAxis("Vertical") * m_MovementSpeed);
-            m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_MovementSpeed);
+            m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_Stats.GetMovementSpeed());
         }
         else
             m_Rigidbody.velocity = Vector3.zero;
@@ -294,7 +275,7 @@ public class PlayerController : MonoBehaviour
                 m_CanAttack = false;
                 if (m_AttackTimer == 0.0f)
                 {
-                    m_AttackBox.SetActive(true);
+                    m_AttackObj.SetActive(true);
                     m_IsAttackActive = true;
                 }
             }
@@ -303,50 +284,40 @@ public class PlayerController : MonoBehaviour
         if (!m_CanAttack)
         {
             m_AttackTimer += Time.deltaTime;
-            if (m_AttackTimer >= m_AttackSpeed)
+            if (m_AttackTimer >= m_Stats.GetAttackSpeed())
             {
                 m_CanAttack = true;
                 m_AttackTimer = 0.0f;
             }
         }
 
-        if (m_AttackBox.activeSelf)
+        if (m_AttackObj.activeSelf)
             m_CurAttackTime += Time.deltaTime;
 
-        if (m_CurAttackTime >= m_AttackTime)
+        if (m_CurAttackTime >= m_Stats.GetAttackTime())
         {
             m_IsAttackActive = false;
             m_CurAttackTime = 0.0f;
-            m_AttackBox.SetActive(false);
+            m_AttackObj.SetActive(false);
         }
     }
 
-    public static int GetHealth()
-    {
-        return m_Health;
-    }
+    //public void ChangeHealth(int value)
+    //{
+    //    if (m_Health > 1 && m_Health <= m_StartHP)
+    //    {
+    //        m_Health += value;
+    //        if (m_Health > m_StartHP)
+    //            m_Health = m_StartHP;
 
-    public static int GetDamage()
-    {
-        return m_Damage;
-    }
+    //        if (m_Health < 1)
+    //        {
+    //            //Player is dead;
+    //        }
 
-    public void ChangeHealth(int value)
-    {
-        if (m_Health > 1 && m_Health <= m_StartHP)
-        {
-            m_Health += value;
-            if (m_Health > m_StartHP)
-                m_Health = m_StartHP;
-
-            if (m_Health < 1)
-            {
-                //Player is dead;
-            }
-
-            m_Healthbar.ChangeScale(value);
-        }
-    }
+    //        m_Healthbar.ChangeScale(value);
+    //    }
+    //}
 
     public bool GetIsHookReady()
     {

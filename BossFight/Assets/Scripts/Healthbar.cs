@@ -17,7 +17,7 @@ public class Healthbar : MonoBehaviour
     GameObject m_Background;
 
     //Component vars
-    EnemyStats m_EnemyStats;
+    EntityStats m_EntityStats;
     float m_ScaleFactor;
 
 	void Start ()
@@ -27,20 +27,16 @@ public class Healthbar : MonoBehaviour
 
         m_Slider.transform.localScale = m_Background.transform.localScale;
 
-        m_EnemyStats = transform.parent.GetComponent<EnemyStats>();
+        m_EntityStats = transform.parent.GetComponent<EntityStats>();
 
-        if (m_EnemyStats)
+        if (m_EntityStats)
         {
-            m_ScaleFactor = m_Background.transform.localScale.x / m_EnemyStats.GetHealth();
-            m_Mode = Mode.Enemy;
+            m_ScaleFactor = m_Background.transform.localScale.x / m_EntityStats.GetHealth();
+            if (transform.parent.tag == "Enemy")
+                m_Mode = Mode.Enemy;
+            else if (transform.parent.tag == "Player")
+                m_Mode = Mode.Player;
         }
-        else if (transform.parent.tag == "Player")
-        {
-            m_ScaleFactor = m_Background.transform.localScale.x / PlayerController.GetHealth();
-            m_Mode = Mode.Player;
-        }
-        else
-            Debug.Log("Healthbar could not find stats!");
     }
 
     void Update()
