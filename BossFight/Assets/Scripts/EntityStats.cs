@@ -15,6 +15,7 @@ public class EntityStats : MonoBehaviour
     public bool m_CanBeKnockedback = true;
     public float m_DamagedTimer = 0.2f;
     public bool m_CanDie = true;
+    public bool m_CanTakeDamage = true;
 
     //Health vars
     int m_CurHealth;
@@ -25,6 +26,9 @@ public class EntityStats : MonoBehaviour
 
     //Component vars
     Healthbar m_Healthbar;
+
+    //Charge vars
+    float m_CurrentCharge = 0.0f;
 
     void Awake()
     {
@@ -83,7 +87,24 @@ public class EntityStats : MonoBehaviour
             m_IsDamaged = true;
             m_Renderer.color = Color.red;
 
-            m_CurHealth += val;
+            int temp = m_CurHealth + val;
+            bool lost = false;
+            if (temp < m_CurHealth)
+                lost = true;
+
+            if (lost && m_CanTakeDamage)
+            {
+                m_CurHealth += val;
+                if (m_Healthbar)
+                    m_Healthbar.ChangeScale(val);
+            }
+            else if (!lost)
+            {
+                m_CurHealth += val;
+                if (m_Healthbar)
+                    m_Healthbar.ChangeScale(val);
+            }
+
             if (m_CurHealth > m_Health)
                 m_CurHealth = m_Health;
 
@@ -91,17 +112,14 @@ public class EntityStats : MonoBehaviour
             {
                 if (gameObject.tag == "Enemy")
                 {
-                    SceneController.m_CurrentEnemyAmount--;
-                    Destroy(this.gameObject);
+                    //SceneController.m_CurrentEnemyAmount--;
+                    //Destroy(this.gameObject);
                 }
                 else if (gameObject.tag == "Player")
                     Debug.Log("Player is dead!");
             }
 
-            if (m_Healthbar)
-                m_Healthbar.ChangeScale(val);
-
-            Debug.Log("Entity " + gameObject.name + " has " + m_CurHealth + " health left");
+            //Debug.Log("Entity " + gameObject.name + " has " + m_CurHealth + " health left");
         }
     }
     public void SetHealth(int val)
@@ -165,5 +183,23 @@ public class EntityStats : MonoBehaviour
     public void SetCanDie(bool state)
     {
         m_CanDie = state;
+    }
+
+    public bool GetCanTakeDMG()
+    {
+        return m_CanTakeDamage;
+    }
+    public void SetCanTakeDMG(bool state)
+    {
+        m_CanTakeDamage = state;
+    }
+
+    public float GetCurrentCharge()
+    {
+        return m_CurrentCharge;
+    }
+    public void SetCurrentCharge(float value)
+    {
+        m_CurrentCharge = value;
     }
 }
