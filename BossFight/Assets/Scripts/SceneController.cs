@@ -125,6 +125,11 @@ public class SceneController : MonoBehaviour
         }
     }
 
+    public int GetRemainingEnemies()
+    {
+        return m_MaxEnemies - m_EnemiesKilled;
+    }
+
     void SpawnEnemy(GameObject type)
     {
         GameObject clone = (GameObject)Instantiate(type, m_SpawnPoints[Random.Range(0, m_SpawnPoints.Length - 1)].position, Quaternion.identity);

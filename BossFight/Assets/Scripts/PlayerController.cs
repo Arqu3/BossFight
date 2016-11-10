@@ -210,6 +210,10 @@ public class PlayerController : MonoBehaviour
                     m_HookDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
                     m_HookDir.y = 0;
                     m_IsHooked = true;
+
+                    //Apply stun if enemy is hit
+                    if (m_HookHit.collider.gameObject.tag == "Enemy")
+                        m_HookHit.collider.gameObject.GetComponent<EntityStats>().SetStunned(m_Stats.GetStunAmount());
                 }
             }
         }

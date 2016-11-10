@@ -49,7 +49,26 @@ public class EnemyController : MonoBehaviour
 	
 	void Update ()
     {
-        TargetUpdate();
+        if (!m_Stats.GetIsStunned())
+        {
+            if (!m_Agent.enabled)
+                m_Agent.enabled = true;
+            TargetUpdate();
+        }
+        else
+        {
+            if (m_Agent.enabled)
+                m_Agent.enabled = false;
+
+            if (m_AttackObj.activeSelf)
+            {
+                m_CanAttack = true;
+                m_AttackTimer = 0.0f;
+                m_CurAttackTime = 0.0f;
+                m_IsAttackActive = false;
+                m_AttackObj.SetActive(false);
+            }
+        }
     }
 
     void TargetUpdate()

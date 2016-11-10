@@ -16,6 +16,9 @@ public class EntityStats : MonoBehaviour
     public float m_DamagedTimer = 0.2f;
     public bool m_CanDie = true;
     public bool m_CanTakeDamage = true;
+    public bool m_CanBeStunned = true;
+    public float m_StunAmount = 1.0f;
+    public float m_StunReduction = 0.0f;
 
     //Health vars
     int m_CurHealth;
@@ -29,6 +32,11 @@ public class EntityStats : MonoBehaviour
 
     //Charge vars
     float m_CurrentCharge = 0.0f;
+
+    //Stun vars
+    bool m_IsStunned = false;
+    float m_CurStunDur = 0.0f;
+    float m_StunDuration = 0.0f;
 
     void Awake()
     {
@@ -55,6 +63,7 @@ public class EntityStats : MonoBehaviour
     void Update()
     {
         ColorUpdate();
+        StunnedUpdate();
     }
 
     public void SetDamage(int val)
@@ -201,5 +210,57 @@ public class EntityStats : MonoBehaviour
     public void SetCurrentCharge(float value)
     {
         m_CurrentCharge = value;
+    }
+
+    public bool GetCanBeStunned()
+    {
+        return m_CanBeStunned;
+    }
+    public bool GetIsStunned()
+    {
+        return m_IsStunned;
+    }
+    public float GetStunDuration()
+    {
+        return m_CurStunDur;
+    }
+    public void SetStunned(float duration)
+    {
+        if (m_CanBeStunned)
+        {
+            m_StunReduction = Mathf.Clamp01(m_StunReduction);
+            duration = duration - (duration * m_StunReduction);
+            duration = Mathf.Clamp(duration, 0.0f, 100.0f);
+            m_IsStunned = true;
+            m_StunDuration = duration;
+        }
+
+    }
+    public float GetStunAmount()
+    {
+        return m_StunAmount;
+    }
+    public void SetStunAmount(float value)
+    {
+        m_StunAmount = value;
+    }
+
+    void StunnedUpdate()
+    {
+        if (m_IsStunned)
+        {
+            if (m_CurStunDur < m_StunDuration)
+            {
+                m_CurStunDur += Time.deltaTime;
+                m_Renderer.color = Color.black;
+            }
+            else
+            {
+                m_Renderer.color = m_Color;
+                m_IsStunned = false;
+                m_CurStunDur = 0.0f;
+                m_StunDuration = 0.0f;
+            }
+        }
     }
 }
