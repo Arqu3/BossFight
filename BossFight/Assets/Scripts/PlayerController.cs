@@ -9,6 +9,7 @@ public enum MovementState
     GrapplingHook
 }
 
+[RequireComponent (typeof(EntityStats))]
 public class PlayerController : MonoBehaviour
 {
     //Public vars
@@ -63,7 +64,8 @@ public class PlayerController : MonoBehaviour
     GameObject m_AttackObj;
     GameObject m_SpecialAttackObj;
     float m_CurAttackTime = 0.0f;
-    bool m_IsAttackActive = false;
+    bool m_IsAttack = false;
+    bool m_IsSpecialAttack = false;
 
     //Charge vars
     float m_CurCharge = 0.0f;
@@ -125,7 +127,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(m_PointerTransform.position);
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        if (!m_IsAttackActive)
+        if (!m_IsAttack && !m_IsSpecialAttack)
             m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
 
         //m_PointerTransform.Rotate(90, 0, 0);
@@ -146,7 +148,7 @@ public class PlayerController : MonoBehaviour
 
     void MovementUpdate()
     {
-        if (IsMoving() && !m_IsAttackActive)
+        if (IsMoving() && !m_IsSpecialAttack)
         {
             m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_CurSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_CurSpeed, 1f));
             //m_Velocity = new Vector3(Input.GetAxis("Horizontal") * m_MovementSpeed, 0, Input.GetAxis("Vertical") * m_MovementSpeed);
@@ -196,7 +198,7 @@ public class PlayerController : MonoBehaviour
     {
         //Vector3 temp1 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         //Debug.DrawRay(transform.position, (new Vector3(temp1.x, 0, temp1.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized * m_HookDistance);
-        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttackActive && !m_IsCharging)
+        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttack && !m_IsCharging)
         {
             m_IsHookCD = true;
             Vector3 temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -302,13 +304,13 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetMouseButton(0))
         {
-            if (m_CanAttack && !m_IsCharging && !m_IsAttackActive)
+            if (m_CanAttack && !m_IsCharging && !m_IsAttack && !m_IsSpecialAttack)
             {
                 m_CanAttack = false;
                 if (m_AttackTimer == 0.0f)
                 {
                     m_AttackObj.SetActive(true);
-                    m_IsAttackActive = true;
+                    m_IsAttack = true;
                 }
             }
         }
@@ -324,11 +326,16 @@ public class PlayerController : MonoBehaviour
         }
 
         if (m_AttackObj.activeSelf)
+        {
             m_CurAttackTime += Time.deltaTime;
+            m_CurSpeed = m_Stats.GetMovementSpeed() / 3;
+        }
+        else
+            m_CurSpeed = m_Stats.GetMovementSpeed();
 
         if (m_CurAttackTime >= m_Stats.GetAttackTime())
         {
-            m_IsAttackActive = false;
+            m_IsAttack = false;
             m_CurAttackTime = 0.0f;
             m_AttackObj.SetActive(false);
         }
@@ -336,20 +343,18 @@ public class PlayerController : MonoBehaviour
 
     void ChargeUpdate()
     {
-        if (Input.GetMouseButton(1) && m_CurCharge < m_MaxCharge && !m_AttackObj.activeSelf && !m_IsAttackActive)
+        if (Input.GetMouseButton(1) && m_CurCharge <= m_MaxCharge && !m_AttackObj.activeSelf && !m_IsAttack)
         {
             m_Chargebar.gameObject.SetActive(true);
             m_IsCharging = true;
             m_CurCharge += Time.deltaTime;
+            m_CurCharge = Mathf.Clamp(m_CurCharge, 0.0f, m_MaxCharge);
             m_Chargebar.ChangeScale(Time.deltaTime / m_MaxCharge);
 
             m_CurSpeed = m_Stats.GetMovementSpeed() / 2;
         }
         else if (Input.GetMouseButtonUp(1) && m_CurCharge > 0.0f)
         {
-            if (m_CurCharge > m_MaxCharge)
-                m_CurCharge = m_MaxCharge;
-
             m_Stats.SetCurrentCharge(m_CurCharge);
             m_SpecialAttackObj.SetActive(true);
 
@@ -358,7 +363,7 @@ public class PlayerController : MonoBehaviour
             m_Chargebar.SetScale(0);
             m_Chargebar.gameObject.SetActive(false);
 
-            m_IsAttackActive = true;
+            m_IsSpecialAttack = true;
 
             m_CurSpeed = m_Stats.GetMovementSpeed();
         }
@@ -368,7 +373,7 @@ public class PlayerController : MonoBehaviour
 
         if (m_CurAttackTime >= m_Stats.GetAttackTime())
         {
-            m_IsAttackActive = false;
+            m_IsSpecialAttack = false;
             m_CurAttackTime = 0.0f;
             m_Stats.SetCurrentCharge(0.0f);
             m_SpecialAttackObj.SetActive(false);

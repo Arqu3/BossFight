@@ -36,13 +36,9 @@ public class Healthbar : MonoBehaviour
             else
             {
                 m_ScaleFactor = m_Background.transform.localScale.x;
+                SetScale(0);
             }
         }
-    }
-
-    void Update()
-    {
-
     }
 
     public void ChangeScale(float value)

@@ -14,6 +14,7 @@ public class SceneController : MonoBehaviour
 
     //Player vars
     PlayerController m_Player;
+    PlayerInventory m_Inventory;
 
     //Enemy spawnpoint vars
     Transform[] m_SpawnPoints;
@@ -47,10 +48,11 @@ public class SceneController : MonoBehaviour
     {
         //Find and sort spawnpoints
         var spawnpoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
-        m_SpawnPoints = new Transform[spawnpoints.Length];
 
         if (spawnpoints.Length > 0)
         {
+            m_SpawnPoints = new Transform[spawnpoints.Length];
+
             for (int i = 0; i < spawnpoints.Length; i++)
             {
                 m_SpawnPoints[i] = spawnpoints[i].transform;
@@ -74,8 +76,7 @@ public class SceneController : MonoBehaviour
 
         m_Teleporter = GameObject.Find("Teleport").GetComponent<TeleporterController>();
         m_Player = GameObject.Find("Player").GetComponent<PlayerController>();
-
-        SpawnEnemy(m_EnemyPrefabs[0]);
+        m_Inventory = m_Player.gameObject.GetComponent<PlayerInventory>();
 	}
 	
 	void Update()
