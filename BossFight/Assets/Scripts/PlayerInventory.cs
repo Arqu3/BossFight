@@ -14,13 +14,16 @@ public class PlayerInventory : MonoBehaviour
 {
     //Public vars
     public GameObject m_GridSlot;
-    public GameObject m_CursorItem;
+    public Item m_CursorItem;
 
     public int m_RedEssence = 0;
     public int m_BlueEssence = 0;
     public int m_GreenEssence = 0;
 
-    public List<Grid> m_Grid = new List<Grid>();
+    List<Grid> m_Grid = new List<Grid>();
+    List<EquipmentSlot> m_EquipSlots = new List<EquipmentSlot>();
+
+    public GameObject itemPrefab;
 
     //Component vars
     PlayerController m_Player;
@@ -33,8 +36,17 @@ public class PlayerInventory : MonoBehaviour
     int m_Rows = 0;
     Grid m_LastGrid;
 
-    Color m_ActiveColor = Color.green;
-    int m_ActiveItems = 8;
+    void Awake()
+    {
+        var eq = GameObject.FindGameObjectsWithTag("EquipmentSlot");
+        if (eq.Length > 0)
+        {
+            for (int i = 0; i < eq.Length; i++)
+            {
+                m_EquipSlots.Add(eq[i].GetComponent<EquipmentSlot>());
+            }
+        }
+    }
 
 	void Start ()
     {
@@ -46,12 +58,39 @@ public class PlayerInventory : MonoBehaviour
 
         CalculateInvGrid();
         SpawnInventorySlots();
-	}
+
+        for (int i = 0; i < 5; i++)
+        {
+            GameObject clone = (GameObject)Instantiate(itemPrefab, m_UIController.GetCharacterPanel());
+            if (clone.GetComponent<Item>())
+                AddItem(clone.GetComponent<Item>());
+        }
+    }
 
     void Update()
     {
-        //DisplayInventory();
-        InventoryUpdate();
+        if (m_UIController.GetCharacterPanel().gameObject.activeSelf)
+            InventoryUpdate();
+    }
+
+    public int GetEssence(EssenceType type)
+    {
+        int num = 0;
+        switch(type)
+        {
+            case EssenceType.Blue:
+                num = m_BlueEssence;
+                break;
+
+            case EssenceType.Green:
+                num = m_GreenEssence;
+                break;
+
+            case EssenceType.Red:
+                num = m_RedEssence;
+                break;
+        }
+        return num;
     }
 
     public void AddEssence(EssenceType type, int amount)
@@ -72,6 +111,52 @@ public class PlayerInventory : MonoBehaviour
         }
     }
 
+    public void AddItem(Item item)
+    {
+        for (int i = 0; i < m_Grid.Count; i++)
+        {
+            if (!m_Grid[i].GetItem())
+            {
+                m_Grid[i].SetItem(item);
+                break;
+            }
+            if (i >= m_Grid.Count-1 && m_Grid[i].GetItem())
+            {
+                Debug.Log("Inventory full!");
+            }
+        }
+    }
+
+    public void RemoveItem(Item item)
+    {
+        for (int i = 0; i < m_Grid.Count; i++)
+        {
+            if (m_Grid[i].GetItem())
+            {
+                if (m_Grid[i].GetItem() == item)
+                {
+                    Destroy(m_Grid[i].GetItem().gameObject);
+                    m_Grid[i].SetItem(null);
+                    break;
+                }
+                if (i >= m_Grid.Count - 1)
+                {
+                    if (m_Grid[i].GetItem() != item || !m_Grid[i].GetItem())
+                        Debug.Log("Item does not exist");
+                }
+            }
+        }
+    }
+    public void RemoveItem(int index)
+    {
+        index = Mathf.Clamp(index, 0, m_Grid.Count - 1);
+        if (m_Grid[index].GetItem())
+        {
+            Destroy(m_Grid[index].GetItem().gameObject);
+            m_Grid[index].SetItem(null);
+        }
+    }
+
     void CalculateInvGrid()
     {
         for (int i = 0; i < m_GridLength; i++)
@@ -86,8 +171,8 @@ public class PlayerInventory : MonoBehaviour
         int x = 0;
         int y = 0;
 
-        float m_AvgX = (64 * m_InventoryGrid.y) / 2;
-        float m_AvgY = (128 * m_InventoryGrid.x) / 2;
+        float offsetX = (96 * m_InventoryGrid.y) / 2;
+        float offsetY = (96 * m_InventoryGrid.x) / 2;
 
         for (int i = 0; i < m_GridLength; i++)
         {
@@ -97,8 +182,8 @@ public class PlayerInventory : MonoBehaviour
                 y--;
             }
 
-            GameObject clone = (GameObject)Instantiate(m_GridSlot, new Vector3((Screen.width / 2) + (128 * x * UIController.m_Scalefactor), 
-                (Screen.height / 2) + ((128 * y) + m_AvgY) * UIController.m_Scalefactor, 0), Quaternion.identity, m_UIController.GetCharacterPanel());
+            GameObject clone = (GameObject)Instantiate(m_GridSlot, new Vector3((Screen.width / 2) + ((128 * x) + offsetX * 0.75f) * UIController.m_Scalefactor, 
+                (Screen.height / 2) + ((128 * y) - offsetY * 0.65f) * UIController.m_Scalefactor, 0), Quaternion.identity, m_UIController.GetCharacterPanel());
 
             if (clone.GetComponent<Grid>())
                 m_Grid.Add(clone.GetComponent<Grid>());
@@ -126,14 +211,9 @@ public class PlayerInventory : MonoBehaviour
                 {
                     if (m_Grid[i].GetItem())
                     {
-                        GameObject temp = m_CursorItem;
-
                         m_LastGrid.SetItem(m_Grid[i].GetItem());
                         m_Grid[i].SetItem(m_CursorItem);
                         m_CursorItem = null;
-
-                        //m_CursorItem = m_Grid[i].GetItem();
-                        //m_Grid[i].SetItem(temp);
                         Debug.Log("Swapped items");
                     }
                     else
@@ -144,7 +224,87 @@ public class PlayerInventory : MonoBehaviour
                     }
                 }
             }
+
+            if (m_Grid[i].GetIsHover() && m_Grid[i].GetItem())
+            {
+                if (m_Grid[i].GetItem().GetIsEquipAble())
+                {
+                    if (Input.GetMouseButtonDown(1))
+                    {
+                        for (int j = 0; j < m_EquipSlots.Count; j++)
+                        {
+                            if (m_Grid[i].GetItem().GetEType().Equals(m_EquipSlots[j].GetEqType()))
+                            {
+                                if (!m_EquipSlots[j].GetItem())
+                                {
+                                    m_EquipSlots[j].EquipItem(m_Grid[i].GetItem());
+                                    m_Grid[i].SetItem(null);
+
+                                    Debug.Log("Equiped item");
+                                }
+                                else
+                                {
+                                    Item temp = m_Grid[i].GetItem();
+                                    m_Grid[i].SetItem(m_EquipSlots[j].GetItem());
+                                    m_EquipSlots[j].UnEquipItem();
+                                    m_EquipSlots[j].EquipItem(temp);
+
+                                    Debug.Log("Swapped equiped item");
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        if (m_CursorItem)
+        {
+            if (m_CursorItem.GetIsEquipAble())
+            {
+                if (Input.GetMouseButtonUp(0))
+                {
+                    for (int i = 0; i < m_EquipSlots.Count; i++)
+                    {
+                        if (m_EquipSlots[i].GetIsHover() && m_EquipSlots[i].GetEqType().Equals(m_CursorItem.GetEType()))
+                        {
+                            if (!m_EquipSlots[i].GetItem())
+                            {
+                                m_EquipSlots[i].EquipItem(m_CursorItem);
+                                m_CursorItem = null;
+                                Debug.Log("Equiped item");
+                            }
+                            else
+                            {
+                                Item temp = m_CursorItem;
+                                m_CursorItem = m_EquipSlots[i].GetItem();
+                                m_EquipSlots[i].UnEquipItem();
+                                m_EquipSlots[i].EquipItem(temp);
+                                Debug.Log("Swapped equiped item");
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < m_EquipSlots.Count; i++)
+            {
+                if (m_EquipSlots[i].GetIsHover() && m_EquipSlots[i].GetItem())
+                {
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        m_CursorItem = m_EquipSlots[i].GetItem();
+                        m_EquipSlots[i].UnEquipItem();
+                        break;
+                    }
+                }
+            }
+        }
+
 
         if (m_CursorItem)
             m_CursorItem.transform.position = Input.mousePosition;
@@ -154,10 +314,16 @@ public class PlayerInventory : MonoBehaviour
             bool noneHover = true;
             for (int i = 0; i < m_Grid.Count; i++)
             {
-                if (m_Grid[i].GetIsHover())
-                    noneHover = false;
+                for (int j = 0; j < m_EquipSlots.Count; j++)
+                {
+                    if (m_Grid[i].GetIsHover() || m_EquipSlots[j].GetIsHover())
+                    {
+                        noneHover = false;
+                        break;
+                    }
+                }
             }
-            Debug.Log(noneHover);
+            //Debug.Log(noneHover);
             if (noneHover && m_CursorItem && m_LastGrid)
             {
                 m_LastGrid.SetItem(m_CursorItem);
@@ -168,34 +334,12 @@ public class PlayerInventory : MonoBehaviour
         }
 
     }
-
-    void DisplayInventory()
+    void SwapItems(Grid g, Item i)
     {
-        int x = 0;
-        int y = 0;
-
-        for (int i = 0; i < m_Grid.Count; i++)
+        if (g.GetItem() != i)
         {
-            if (x % m_InventoryGrid.y == 0)
-            {
-                x = 0;
-                y--;
-            }
-            if (i < m_ActiveItems)
-                m_ActiveColor = Color.green;
-            else
-                m_ActiveColor = Color.red;
-            Debug.DrawRay(Camera.main.WorldToScreenPoint(new Vector3(1 * x, 0, 1 * y)), new Vector3(0, 10.0f, 0), m_ActiveColor);
-            x++;
-        }
-    }
-
-    void SwapItems(Grid g, GameObject gO)
-    {
-        if (g.GetItem() != gO)
-        {
-            GameObject temp = gO;
-            gO = g.GetItem();
+            Item temp = i;
+            i = g.GetItem();
             g.SetItem(temp);
         }
     }

@@ -64,4 +64,10 @@ public class Healthbar : MonoBehaviour
             m_Slider.transform.localScale.y, m_Slider.transform.localScale.z);
         m_Slider.transform.localPosition = new Vector3(Mathf.Clamp(m_Slider.transform.localPosition.x, -m_Background.transform.localScale.x / 2, 0), 0, 0);
     }
+
+    public void ChangeScaleFactor(float value)
+    {
+        if (value != 0.0f)
+            m_ScaleFactor = m_Background.transform.localScale.x / value;
+    }
 }

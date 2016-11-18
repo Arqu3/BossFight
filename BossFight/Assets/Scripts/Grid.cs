@@ -3,10 +3,11 @@ using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+[RequireComponent(typeof(CanvasRenderer))]
 public class Grid : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     //Public vars
-    public GameObject m_Item;
+    public Item m_Item;
 
     //Hover vars
     public bool m_IsHover = false;
@@ -42,11 +43,11 @@ public class Grid : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         m_Renderer.SetColor(m_StartColor);
     }
 
-    public void SetItem(GameObject item)
+    public void SetItem(Item item)
     {
         m_Item = item;
     }
-    public GameObject GetItem()
+    public Item GetItem()
     {
         return m_Item;
     }

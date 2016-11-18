@@ -6,6 +6,7 @@ public class SceneController : MonoBehaviour
 {
     //Public vars
     public GameObject[] m_EnemyPrefabs;
+    public GameObject[] m_DropPrefabs;
     public float m_SpawnInterval = 10.0f;
     public int m_MaxEnemies = 10;
 
@@ -90,9 +91,13 @@ public class SceneController : MonoBehaviour
         {
             if (m_Enemies[i].GetHealth() < 1 && m_Enemies[i].GetCanDie())
             {
+                if (Random.Range(0, 3) == 1)
+                    DropItem(m_DropPrefabs[0], m_Enemies[i].transform.position);
+
                 Destroy(m_Enemies[i].gameObject);
                 m_Enemies.Remove(m_Enemies[i]);
                 m_EnemiesKilled++;
+                break;
             }
         }
 
@@ -139,5 +144,27 @@ public class SceneController : MonoBehaviour
         else
             Debug.Log("Spawned enemy is missing EntityStats!");
         m_SpawnedEnemyAmount++;
+    }
+
+    void DropItem(GameObject item, Vector3 position)
+    {
+        GameObject clone = (GameObject)Instantiate(item, new Vector3(position.x, 0.0f, position.z), Quaternion.identity);
+        if (clone.GetComponent<Essence>())
+        {
+            //var v = System.Enum.GetValues(typeof(EssenceType));
+            //EssenceType randomE = (EssenceType)v.GetValue(Random.Range(0, v.Length));
+
+            int random = Random.Range(1, 101);
+            EssenceType randomType;
+
+            if (random > 0 && random < 46)
+                randomType = EssenceType.Blue;
+            else if (random > 45 && random < 91)
+                randomType = EssenceType.Green;
+            else
+                randomType = EssenceType.Red;
+
+            clone.GetComponent<Essence>().m_Type = randomType;
+        }
     }
 }

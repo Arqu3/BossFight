@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour
     public float m_BreakHookDist = 2.0f;
 
     public float m_MaxCharge = 3.0f;
-                
+                    
     //Component vars
 	Rigidbody m_Rigidbody;
     NavMeshAgent m_Agent;
@@ -53,7 +53,7 @@ public class PlayerController : MonoBehaviour
     Vector3 m_HookDir;
     Vector3 m_HookHitPos;
     RaycastHit m_HookHit;
-    public LayerMask m_HookMask;
+    public LayerMask m_LayerMask;
 
     //Invincible vars
     float m_InvTimer = 0.0f;
@@ -150,6 +150,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsMoving() && !m_IsSpecialAttack)
         {
+            m_CurSpeed = Mathf.Clamp(m_CurSpeed, 0.0f, m_Stats.GetMovementSpeed());
             m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_CurSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_CurSpeed, 1f));
             //m_Velocity = new Vector3(Input.GetAxis("Horizontal") * m_MovementSpeed, 0, Input.GetAxis("Vertical") * m_MovementSpeed);
             m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_CurSpeed);
@@ -203,7 +204,7 @@ public class PlayerController : MonoBehaviour
             m_IsHookCD = true;
             Vector3 temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-            if (Physics.Raycast(transform.position, (new Vector3(temp.x, 0, temp.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized, out m_HookHit, m_HookDistance, m_HookMask))
+            if (Physics.Raycast(transform.position, (new Vector3(temp.x, 0, temp.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized, out m_HookHit, m_HookDistance, m_LayerMask))
             {
                 if (m_HookHit.collider.gameObject.tag != "Player")
                 {
@@ -280,7 +281,7 @@ public class PlayerController : MonoBehaviour
     {
         //Debug.DrawRay(transform.position, Vector3.down * 5.0f);
         RaycastHit hit;
-        Physics.Raycast(transform.position, Vector3.down, out hit, 5.0f, m_HookMask);
+        Physics.Raycast(transform.position, Vector3.down, out hit, 5.0f, m_LayerMask);
         if (hit.transform.root.gameObject.tag == "CombatArea")
             return true;
         return false;

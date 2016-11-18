@@ -4,14 +4,19 @@ using System.Collections;
 public class EntityStats : MonoBehaviour
 {
     //Public vars
-    public int m_Health = 100;
+    public int m_MaxHealth = 100;
+    public float m_HealthMulti = 1.0f;
     public int m_Damage = 10;
+    public float m_DamageMulti = 1.0f;
     public float m_MovementSpeed = 8.0f;
+    public float m_MovementMulti = 1.0f;
     public float m_AttackSpeed = 1.0f;
+    public float m_AttackSpeedMulti = 1.0f;
     public float m_AttackTime = 0.4f;
     public float m_AggroRange = 10.0f;
     public float m_AttackRange = 2.0f;
     public float m_KnockbackForce = 3.0f;
+    public float m_KnockbackMulti = 1.0f;
     public bool m_CanBeKnockedback = true;
     public float m_DamagedTimer = 0.2f;
     public bool m_CanDie = true;
@@ -40,7 +45,7 @@ public class EntityStats : MonoBehaviour
 
     void Awake()
     {
-        m_CurHealth = m_Health;
+        m_CurHealth = m_MaxHealth;
     }
 
     void Start()
@@ -66,15 +71,6 @@ public class EntityStats : MonoBehaviour
         StunnedUpdate();
     }
 
-    public void SetDamage(int val)
-    {
-        m_Damage = val;
-    }
-    public int GetDamage()
-    {
-        return m_Damage;
-    }
-
     void ColorUpdate()
     {
         if (m_IsDamaged)
@@ -89,9 +85,24 @@ public class EntityStats : MonoBehaviour
         }
     }
 
+    //Damage vars
+    public void SetDamage(int val)
+    {
+        m_Damage = val;
+    }
+    public void AddDamage(int val)
+    {
+        m_Damage += val;
+    }
+    public int GetDamage()
+    {
+        return (int)(m_Damage * m_DamageMulti);
+    }
+
+    //Health functions
     public void ChangeHealth(int val)
     {
-        if (m_CurHealth > 0 && m_CurHealth <= m_Health)
+        if (m_CurHealth > 0 && m_CurHealth <= m_MaxHealth)
         {
             m_IsDamaged = true;
             m_Renderer.color = Color.red;
@@ -114,8 +125,8 @@ public class EntityStats : MonoBehaviour
                     m_Healthbar.ChangeScale(val);
             }
 
-            if (m_CurHealth > m_Health)
-                m_CurHealth = m_Health;
+            if (m_CurHealth > m_MaxHealth)
+                m_CurHealth = m_MaxHealth;
 
             if (m_CurHealth < 1 && GetCanDie())
             {
@@ -138,27 +149,64 @@ public class EntityStats : MonoBehaviour
     }
     public int GetHealth()
     {
+        m_CurHealth = Mathf.Clamp(m_CurHealth, 0, GetMaxHealth());
         return m_CurHealth;
     }
     public int GetMaxHealth()
     {
-        return m_Health;
+        return (int)(m_MaxHealth * m_HealthMulti);
+    }
+    public void AddMaxHealth(int value)
+    {
+        m_MaxHealth += value;
+        if (m_CurHealth > m_MaxHealth)
+            m_CurHealth = m_MaxHealth;
+
+        m_Healthbar.ChangeScaleFactor(GetMaxHealth());
     }
 
+    //Movementspeed functions
     public float GetMovementSpeed()
     {
-        return m_MovementSpeed;
+        return m_MovementSpeed * m_MovementMulti;
+    }
+    public void SetMovementSpeed(float value)
+    {
+        m_MovementSpeed = value;
+    }
+    public void AddMovementSpeed(float value)
+    {
+        m_MovementSpeed += value;
     }
 
+
+    //Attackspeed functions
     public float GetAttackSpeed()
     {
-        return m_AttackSpeed;
+        return m_AttackSpeed * m_AttackSpeedMulti;
     }
     public float GetAttackTime()
     {
         return m_AttackTime;
     }
+    public void SetAttackSpeed(float value)
+    {
+        m_AttackSpeed = value;
+    }
+    public void SetAttackTime(float value)
+    {
+        m_AttackTime = value;
+    }
+    public void AddAttackSpeed(float value)
+    {
+        m_AttackSpeed += value;
+    }
+    public void AddAttackTime(float value)
+    {
+        m_AttackTime += value;
+    }
 
+    //Aggro functions
     public float GetAggroRange()
     {
         return m_AggroRange;
@@ -168,9 +216,18 @@ public class EntityStats : MonoBehaviour
         return m_AttackRange;
     }
 
+    //Knockback functions
     public float GetKnockbackForce()
     {
-        return m_KnockbackForce;
+        return m_KnockbackForce * m_KnockbackMulti;
+    }
+    public void SetKnockbackForce(float value)
+    {
+        m_KnockbackForce = value;
+    }
+    public void AddKnockbackForce(float value)
+    {
+        m_KnockbackForce += value;
     }
     public bool GetCanBeKnockedback()
     {
@@ -185,6 +242,7 @@ public class EntityStats : MonoBehaviour
         m_CanBeKnockedback = state;
     }
 
+    //Candie functions
     public bool GetCanDie()
     {
         return m_CanDie;
@@ -194,6 +252,7 @@ public class EntityStats : MonoBehaviour
         m_CanDie = state;
     }
 
+    //Take damage functions
     public bool GetCanTakeDMG()
     {
         return m_CanTakeDamage;
@@ -203,6 +262,7 @@ public class EntityStats : MonoBehaviour
         m_CanTakeDamage = state;
     }
 
+    //Charge functions
     public float GetCurrentCharge()
     {
         return m_CurrentCharge;
@@ -212,6 +272,7 @@ public class EntityStats : MonoBehaviour
         m_CurrentCharge = value;
     }
 
+    //Stun functions
     public bool GetCanBeStunned()
     {
         return m_CanBeStunned;
@@ -244,7 +305,6 @@ public class EntityStats : MonoBehaviour
     {
         m_StunAmount = value;
     }
-
     void StunnedUpdate()
     {
         if (m_IsStunned)
@@ -262,5 +322,53 @@ public class EntityStats : MonoBehaviour
                 m_StunDuration = 0.0f;
             }
         }
+    }
+
+    //Multipliers functions
+    public void SetHealthMulti(float value)
+    {
+        m_HealthMulti = value;
+        m_Healthbar.ChangeScaleFactor(GetMaxHealth());
+    }
+    public void AddHealthMulti(float value)
+    {
+        m_HealthMulti += value;
+        m_Healthbar.ChangeScaleFactor(GetMaxHealth());
+    }
+
+    public void SetDamageMulti(float value)
+    {
+        m_DamageMulti = value;
+    }
+    public void AddDamageMulti(float value)
+    {
+        m_DamageMulti += value;
+    }
+
+    public void SetMovementMulti(float value)
+    {
+        m_MovementMulti = value;
+    }
+    public void AddMovementMulti(float value)
+    {
+        m_MovementMulti += value;
+    }
+
+    public void SetAttackSpeedMulti(float value)
+    {
+        m_AttackSpeedMulti = value;
+    }
+    public void AddAttackSpeedMulti(float value)
+    {
+        m_AttackSpeedMulti += value;
+    }
+
+    public void SetKnockbackMulti(float value)
+    {
+        m_KnockbackMulti = value;
+    }
+    public void AddKnockbackMulti(float value)
+    {
+        m_KnockbackMulti += value;
     }
 }

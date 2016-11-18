@@ -6,11 +6,14 @@ public class UIController : MonoBehaviour
 {
     //Component vars
     PlayerController m_Player;
+    EntityStats m_Stats;
+    PlayerInventory m_Inventory;
     Text m_HookText;
     Text m_RemainingText;
     Text m_EssenceRText;
     Text m_EssenceBText;
     Text m_EssenceGText;
+    Text m_StatText;
     Healthbar m_PlayerHealthbar;
     SceneController m_SceneController;
     Canvas m_Canvas;
@@ -37,6 +40,8 @@ public class UIController : MonoBehaviour
             m_EssenceBText = m_CharacterPanel.transform.FindChild("EssenceText2").GetComponent<Text>();
             m_EssenceGText = m_CharacterPanel.transform.FindChild("EssenceText3").GetComponent<Text>();
 
+            m_StatText = m_CharacterPanel.transform.FindChild("StatText").GetComponent<Text>();
+
             m_CharacterPanel.SetActive(false);
         }
     }
@@ -45,7 +50,9 @@ public class UIController : MonoBehaviour
     {
         m_Player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
         m_PlayerHealthbar = m_Player.transform.FindChild("Healthbar").GetComponent<Healthbar>();
+        m_Stats = m_Player.gameObject.GetComponent<EntityStats>();
         m_SceneController = GameObject.Find("SceneHandler").GetComponent<SceneController>();
+        m_Inventory = m_Player.gameObject.GetComponent<PlayerInventory>();
 
         float offsetX = 0.5f;
         float offsetY = 0.5f;
@@ -95,8 +102,19 @@ public class UIController : MonoBehaviour
 
         if (m_IsCharacterPanel)
         {
-            //if (m_EssenceRText)
+            if (m_EssenceRText)
+                m_EssenceRText.text = m_Inventory.GetEssence(EssenceType.Red).ToString();
 
+            if (m_EssenceBText)
+                m_EssenceBText.text = m_Inventory.GetEssence(EssenceType.Blue).ToString();
+
+            if (m_EssenceGText)
+                m_EssenceGText.text = m_Inventory.GetEssence(EssenceType.Green).ToString();
+
+            if (m_StatText)
+                m_StatText.text = "Health: " + m_Stats.GetHealth() + "/" + m_Stats.GetMaxHealth() + "\n" +
+                    "Damage: " + m_Stats.GetDamage() + "\n" +
+                    "Attack Speed: " + m_Stats.GetAttackSpeed();
         }
     }
 
