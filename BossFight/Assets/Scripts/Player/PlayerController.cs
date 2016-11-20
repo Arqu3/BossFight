@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     public float m_HookCD = 1.5f;
     public float m_HookDistance = 20.0f;
     public float m_HookSpeed = 15.0f;
+    public float m_RopeTravelSpeed = 50.0f;
     public float m_BreakHookDist = 2.0f;
 
     public float m_MaxCharge = 3.0f;
@@ -49,10 +50,13 @@ public class PlayerController : MonoBehaviour
     //Hook vars
     bool m_IsHooked = false;
     bool m_IsHookCD = false;
+    bool m_HasHookHit = false;
+    bool m_IsHookUsed = false;
     float m_CurHookCD;
     Vector3 m_HookDir;
     Vector3 m_HookHitPos;
     RaycastHit m_HookHit;
+    GameObject m_HookRope;
     public LayerMask m_LayerMask;
 
     //Invincible vars
@@ -82,6 +86,8 @@ public class PlayerController : MonoBehaviour
         m_PointerTransform = transform.FindChild("Rotation");
         m_AttackObj = m_PointerTransform.FindChild("Hit").gameObject;
         m_SpecialAttackObj = m_PointerTransform.FindChild("SpecialHit").gameObject;
+        m_HookRope = m_PointerTransform.FindChild("HookRope").gameObject;
+        m_HookRope.SetActive(false);
         m_Agent = GetComponent<NavMeshAgent>();
         m_Agent.updateRotation = false;
         m_Stats = GetComponent<EntityStats>();
@@ -127,7 +133,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(m_PointerTransform.position);
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        if (!m_IsAttack && !m_IsSpecialAttack)
+        if (!m_IsAttack && !m_IsSpecialAttack && !m_HasHookHit)
             m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
 
         //m_PointerTransform.Rotate(90, 0, 0);
@@ -148,11 +154,10 @@ public class PlayerController : MonoBehaviour
 
     void MovementUpdate()
     {
-        if (IsMoving() && !m_IsSpecialAttack)
+        if (IsMoving() && !m_IsSpecialAttack && !m_IsHookUsed)
         {
             m_CurSpeed = Mathf.Clamp(m_CurSpeed, 0.0f, m_Stats.GetMovementSpeed());
             m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_CurSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_CurSpeed, 1f));
-            //m_Velocity = new Vector3(Input.GetAxis("Horizontal") * m_MovementSpeed, 0, Input.GetAxis("Vertical") * m_MovementSpeed);
             m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_CurSpeed);
         }
         else
@@ -212,7 +217,8 @@ public class PlayerController : MonoBehaviour
                     m_HookHitPos = m_HookHit.point;
                     m_HookDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
                     m_HookDir.y = 0;
-                    m_IsHooked = true;
+                    m_HasHookHit = true;
+                    m_IsHookUsed = true;
 
                     //Apply stun if enemy is hit
                     if (m_HookHit.collider.gameObject.tag == "Enemy")
@@ -221,14 +227,38 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (m_IsHooked)
+        if (m_HasHookHit)
         {
-            if (Vector3.Distance(transform.position, m_HookHitPos) > m_BreakHookDist)
+            m_HookRope.SetActive(true);
+            float dist = Vector3.Distance(transform.position, m_HookHitPos);
+            if (m_HookRope.transform.localScale.x < dist)
             {
-                m_Rigidbody.velocity = m_HookDir.normalized * m_HookSpeed;
+                m_HookRope.transform.localScale += new Vector3(m_RopeTravelSpeed, 0.0f, 0.0f) * Time.deltaTime;
+                m_HookRope.transform.localPosition = new Vector3(m_HookRope.transform.localScale.x / 2f, 0, 0);
             }
             else
-                m_IsHooked = false;
+            {
+                m_IsHooked = true;
+                m_IsHookUsed = false;
+            }
+
+            if (m_IsHooked)
+            {
+                if (Vector3.Distance(transform.position, m_HookHitPos) > m_BreakHookDist)
+                {
+                    m_Rigidbody.velocity = m_HookDir.normalized * m_HookSpeed;
+
+                    m_HookRope.transform.localScale = new Vector3(dist, 0.1f, 0.1f);
+                    m_HookRope.transform.localPosition = new Vector3(dist / 2f, 0, 0);
+
+                }
+                else
+                {
+                    m_IsHooked = false;
+                    m_HookRope.SetActive(false);
+                    m_HasHookHit = false;
+                }
+            }
         }
 
         if (m_IsHookCD)
@@ -253,7 +283,7 @@ public class PlayerController : MonoBehaviour
         {
             SetState(MovementState.Dashing);
         }
-        else if (m_IsHooked)
+        else if (m_IsHooked || m_HasHookHit)
         {
             SetState(MovementState.GrapplingHook);
         }
@@ -329,7 +359,7 @@ public class PlayerController : MonoBehaviour
         if (m_AttackObj.activeSelf)
         {
             m_CurAttackTime += Time.deltaTime;
-            m_CurSpeed = m_Stats.GetMovementSpeed() / 3;
+            m_CurSpeed = m_Stats.GetMovementSpeed() / 3f;
         }
         else
             m_CurSpeed = m_Stats.GetMovementSpeed();
@@ -380,7 +410,6 @@ public class PlayerController : MonoBehaviour
             m_SpecialAttackObj.SetActive(false);
         }
     }
-
 
     public bool GetIsHookReady()
     {

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public enum EssenceType
 {
@@ -29,6 +30,8 @@ public class PlayerInventory : MonoBehaviour
     PlayerController m_Player;
     EntityStats m_Stats;
     UIController m_UIController;
+    Text m_ItemDescText;
+    Text m_ItemDescText2;
 
     //Inventorry grid vars
     Vector2 m_InventoryGrid = new Vector2(3, 5);
@@ -56,12 +59,17 @@ public class PlayerInventory : MonoBehaviour
         m_Player = GetComponent<PlayerController>();
         m_UIController = GameObject.Find("UI").GetComponent<UIController>();
 
+        m_ItemDescText = m_UIController.GetCharacterPanel().FindChild("ItemDescText").GetComponent<Text>();
+        m_ItemDescText2 = m_ItemDescText.transform.FindChild("Panel").GetComponentInChildren<Text>();
+
         CalculateInvGrid();
         SpawnInventorySlots();
 
         for (int i = 0; i < 5; i++)
         {
-            GameObject clone = (GameObject)Instantiate(itemPrefab, m_UIController.GetCharacterPanel());
+            GameObject clone = (GameObject)Instantiate(itemPrefab);
+            clone.transform.SetParent(m_UIController.GetCharacterPanel());
+            clone.transform.localScale = new Vector3(1, 1, 1);
             if (clone.GetComponent<Item>())
                 AddItem(clone.GetComponent<Item>());
         }
@@ -70,7 +78,31 @@ public class PlayerInventory : MonoBehaviour
     void Update()
     {
         if (m_UIController.GetCharacterPanel().gameObject.activeSelf)
+        {
             InventoryUpdate();
+
+            if (m_ItemDescText.gameObject.activeSelf)
+            {
+                Vector3[] corners = new Vector3[4];
+                m_ItemDescText.rectTransform.GetWorldCorners(corners);
+
+                float maxX = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+                float minX = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+
+                if (maxX > Screen.width)
+                {
+                    m_ItemDescText.transform.position = new Vector3(Screen.width - (m_ItemDescText.rectTransform.sizeDelta.x / 2f) * UIController.m_Scalefactor, 
+                        m_ItemDescText.transform.position.y, m_ItemDescText.transform.position.z);
+                }
+                else if (minX < 0)
+                {
+                    m_ItemDescText.transform.position = new Vector3(Screen.width + (m_ItemDescText.rectTransform.sizeDelta.x / 2f) * UIController.m_Scalefactor,
+                        m_ItemDescText.transform.position.y, m_ItemDescText.transform.position.z);
+                }
+
+                m_ItemDescText.transform.SetAsLastSibling();
+            }
+        }
     }
 
     public int GetEssence(EssenceType type)
@@ -257,6 +289,36 @@ public class PlayerInventory : MonoBehaviour
                     }
                 }
             }
+
+            for (int j = 0; j < m_EquipSlots.Count; j++)
+            {
+                if (m_Grid[i].GetIsHover())
+                {
+                    if (m_Grid[i].GetItem())
+                    {
+                        m_ItemDescText.gameObject.SetActive(true);
+                        m_ItemDescText.text = m_Grid[i].GetItem().GetInformation();
+                        m_ItemDescText2.text = m_ItemDescText.text;
+                        m_ItemDescText.transform.position = m_Grid[i].transform.position - 
+                            new Vector3(0.0f, (m_ItemDescText.rectTransform.sizeDelta.y + m_Grid[i].GetComponent<RectTransform>().sizeDelta.y) / 2f, 0.0f) * UIController.m_Scalefactor;
+                        break;
+                    }
+                }
+                else if (m_EquipSlots[j].GetIsHover())
+                {
+                    if (m_EquipSlots[j].GetItem())
+                    {
+                        m_ItemDescText.gameObject.SetActive(true);
+                        m_ItemDescText.text = m_EquipSlots[j].GetItem().GetInformation();
+                        m_ItemDescText2.text = m_ItemDescText.text;
+                        m_ItemDescText.transform.position = m_EquipSlots[j].transform.position -
+                            new Vector3(0.0f, (m_ItemDescText.rectTransform.sizeDelta.y + m_EquipSlots[j].GetComponent<RectTransform>().sizeDelta.y) / 2f, 0.0f) * UIController.m_Scalefactor;
+                        break;
+                    }
+                }
+                else if (!IsHover())
+                    m_ItemDescText.gameObject.SetActive(false);
+            }
         }
 
         if (m_CursorItem)
@@ -334,6 +396,32 @@ public class PlayerInventory : MonoBehaviour
         }
 
     }
+
+    bool IsHover()
+    {
+        bool hover = false;
+
+        for (int i = 0; i < m_Grid.Count; i++)
+        {
+            if (m_Grid[i].GetIsHover())
+            {
+                hover = true;
+                break;
+            }
+        }
+
+        for (int i = 0; i < m_EquipSlots.Count; i++)
+        {
+            if (m_EquipSlots[i].GetIsHover())
+            {
+                hover = true;
+                break;
+            }
+        }
+
+        return hover;
+    }
+
     void SwapItems(Grid g, Item i)
     {
         if (g.GetItem() != i)

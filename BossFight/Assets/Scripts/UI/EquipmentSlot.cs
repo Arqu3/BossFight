@@ -43,6 +43,7 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public void EquipItem(Item item)
     {
         m_Item = item;
+        m_Item.SetEquiped(true);
 
         ChangeStats(1);
     }
@@ -50,6 +51,8 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         if (m_Item)
             ChangeStats(-1);
+
+        m_Item.SetEquiped(false);
         m_Item = null;
     }
 

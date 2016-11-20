@@ -82,6 +82,7 @@ public class EnemyController : MonoBehaviour
         {
             if (IsInAggroRange())
             {
+                m_Agent.speed = m_Stats.GetMovementSpeed();
                 if (!m_IsAttack)
                 {
                     RotateTowards(m_Target);
@@ -191,6 +192,8 @@ public class EnemyController : MonoBehaviour
 
     void MoveToUpdate()
     {
+        m_Agent.speed = m_Stats.GetMovementSpeed() / 3.0f;
+
         if (Vector3.Distance(transform.position, m_MoveToPosition) > 2)
             m_Agent.SetDestination(m_MoveToPosition);
         else

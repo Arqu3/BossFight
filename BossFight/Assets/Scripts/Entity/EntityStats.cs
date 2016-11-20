@@ -163,6 +163,8 @@ public class EntityStats : MonoBehaviour
             m_CurHealth = m_MaxHealth;
 
         m_Healthbar.ChangeScaleFactor(GetMaxHealth());
+        m_Healthbar.SetScale(GetHealth() / GetMaxHealth());
+        m_Healthbar.ChangeScale(GetHealth());
     }
 
     //Movementspeed functions
@@ -329,11 +331,14 @@ public class EntityStats : MonoBehaviour
     {
         m_HealthMulti = value;
         m_Healthbar.ChangeScaleFactor(GetMaxHealth());
+        m_Healthbar.ChangeScale(GetHealth());
     }
     public void AddHealthMulti(float value)
     {
         m_HealthMulti += value;
         m_Healthbar.ChangeScaleFactor(GetMaxHealth());
+        m_Healthbar.SetScale(GetHealth() / GetMaxHealth());
+        m_Healthbar.ChangeScale(GetHealth());
     }
 
     public void SetDamageMulti(float value)

@@ -41,8 +41,6 @@ public class UIController : MonoBehaviour
             m_EssenceGText = m_CharacterPanel.transform.FindChild("EssenceText3").GetComponent<Text>();
 
             m_StatText = m_CharacterPanel.transform.FindChild("StatText").GetComponent<Text>();
-
-            m_CharacterPanel.SetActive(false);
         }
     }
 
@@ -61,11 +59,13 @@ public class UIController : MonoBehaviour
         m_PlayerHealthbar.transform.position += new Vector3(m_PlayerHealthbar.transform.FindChild("Background").GetComponent<SpriteRenderer>().bounds.size.x / 2 + offsetX, 
             0, -(m_PlayerHealthbar.transform.FindChild("Background").GetComponent<SpriteRenderer>().bounds.size.y / 2 + offsetY));
 
-        m_HookText = transform.FindChild("Canvas").FindChild("HookCDText").GetComponent<Text>();
-        m_RemainingText = transform.FindChild("Canvas").FindChild("RemainingText").GetComponent<Text>();
+        m_HookText = transform.FindChild("Canvas1").FindChild("HookCDText").GetComponent<Text>();
+        m_RemainingText = transform.FindChild("Canvas1").FindChild("RemainingText").GetComponent<Text>();
+
+        m_Canvas.enabled = false;
     }
-	
-	void Update ()
+
+    void Update ()
     {
         TextUpdate();
 
@@ -121,7 +121,7 @@ public class UIController : MonoBehaviour
     void ToggleCharacterPanel()
     {
         m_IsCharacterPanel = !m_IsCharacterPanel;
-        m_CharacterPanel.SetActive(m_IsCharacterPanel);
+        m_Canvas.enabled = m_IsCharacterPanel;
     }
 
     public Transform GetCharacterPanel()
