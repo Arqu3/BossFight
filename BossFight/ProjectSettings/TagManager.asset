@@ -9,6 +9,9 @@ TagManager:
   - SpawnPoint
   - CombatArea
   - EquipmentSlot
+  - Projectile
+  - PlayerItems
+  - HitCollider
   layers:
   - Default
   - TransparentFX

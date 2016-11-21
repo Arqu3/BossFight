@@ -27,11 +27,10 @@ public class PlayerInventory : MonoBehaviour
     public GameObject itemPrefab;
 
     //Component vars
-    PlayerController m_Player;
-    EntityStats m_Stats;
     UIController m_UIController;
     Text m_ItemDescText;
     Text m_ItemDescText2;
+    Image m_CursorImage;
 
     //Inventorry grid vars
     Vector2 m_InventoryGrid = new Vector2(3, 5);
@@ -55,12 +54,14 @@ public class PlayerInventory : MonoBehaviour
     {
         m_GridLength = (int)(m_InventoryGrid.x * m_InventoryGrid.y);
 
-        m_Stats = GetComponent<EntityStats>();
-        m_Player = GetComponent<PlayerController>();
         m_UIController = GameObject.Find("UI").GetComponent<UIController>();
 
         m_ItemDescText = m_UIController.GetCharacterPanel().FindChild("ItemDescText").GetComponent<Text>();
         m_ItemDescText2 = m_ItemDescText.transform.FindChild("Panel").GetComponentInChildren<Text>();
+        m_CursorImage = m_UIController.GetCharacterPanel().FindChild("CursorItem").GetComponent<Image>();
+
+        if (m_CursorImage)
+            m_CursorImage.enabled = false;
 
         CalculateInvGrid();
         SpawnInventorySlots();
@@ -369,7 +370,20 @@ public class PlayerInventory : MonoBehaviour
 
 
         if (m_CursorItem)
-            m_CursorItem.transform.position = Input.mousePosition;
+        {
+            if (!m_CursorImage.isActiveAndEnabled)
+                m_CursorImage.enabled = true;
+
+            m_CursorImage.sprite = m_CursorItem.GetImage().sprite;
+            m_CursorImage.color = m_CursorItem.GetImage().color;
+            m_CursorImage.transform.position = Input.mousePosition;
+            m_CursorImage.transform.SetAsLastSibling();
+        }
+        else
+        {
+            if (m_CursorImage.isActiveAndEnabled)
+                m_CursorImage.enabled = false;
+        }
 
         if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0))
         {
@@ -420,25 +434,5 @@ public class PlayerInventory : MonoBehaviour
         }
 
         return hover;
-    }
-
-    void SwapItems(Grid g, Item i)
-    {
-        if (g.GetItem() != i)
-        {
-            Item temp = i;
-            i = g.GetItem();
-            g.SetItem(temp);
-        }
-    }
-
-    void SwapItems(Grid g1, Grid g2)
-    {
-        if (g1 != g2 && g1.GetItem() != g2.GetItem())
-        {
-            Grid temp = g1;
-            g1 = g2;
-            g2 = temp;
-        }
     }
 }

@@ -45,7 +45,8 @@ MonoBehaviour:
   m_Rarity: 5
   m_ItemName: Carrot Rifle
   m_Instruction: Press F to fire a mighty carrot!
-  m_Description: '"Just make sure no bunnies are around"'
+  m_Description: '"Treat your enemies to a crunchy and carroty snack. Its good for
+    them"'
   m_IsStackable: 0
   m_MaxHealth: 20
   m_HealthMulti: 0
@@ -63,6 +64,11 @@ MonoBehaviour:
   m_Cooldown: 1
   m_Projectile: {fileID: 1000011572446032, guid: 5a94a9790ca10bf44b5f1875479e4ca9,
     type: 2}
+  m_Carrot: {fileID: 1000012664949448, guid: f0d9dd4cea8ee69448d259f0e88a3ebb, type: 2}
+  m_MinAmount: 6
+  m_MaxAmount: 10
+  m_CarrotBonusDMG: 5
+  m_CarrotBonusMulti: 1.1
 --- !u!114 &114000010936236762
 MonoBehaviour:
   m_ObjectHideFlags: 1

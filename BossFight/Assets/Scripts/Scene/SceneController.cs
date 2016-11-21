@@ -15,7 +15,6 @@ public class SceneController : MonoBehaviour
 
     //Player vars
     PlayerController m_Player;
-    PlayerInventory m_Inventory;
 
     //Enemy spawnpoint vars
     Transform[] m_SpawnPoints;
@@ -77,7 +76,6 @@ public class SceneController : MonoBehaviour
 
         m_Teleporter = GameObject.Find("Teleport").GetComponent<TeleporterController>();
         m_Player = GameObject.Find("Player").GetComponent<PlayerController>();
-        m_Inventory = m_Player.gameObject.GetComponent<PlayerInventory>();
 	}
 	
 	void Update()

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public enum ItemType
 {
@@ -53,6 +54,17 @@ public class Item : MonoBehaviour
     //public float m_StunAmount = 0.0f;
     //public float m_StunReduction = 0.0f;
 
+    //Component vars
+    Image m_Image;
+    public virtual void Start()
+    {
+        m_Image = GetComponent<Image>();
+    }
+    public Image GetImage()
+    {
+        return m_Image;
+    }
+
     bool m_IsEquiped = false;
 
     public virtual ItemType GetIType()
@@ -94,6 +106,14 @@ public class Item : MonoBehaviour
     public virtual void SetEquiped(bool state)
     {
         m_IsEquiped = state;
+
+        if (m_IsEquiped)
+        {
+            transform.SetParent(GameObject.FindGameObjectWithTag("Player").transform.FindChild("Items"));
+            transform.localPosition = Vector3.zero;
+        }
+        else
+            transform.SetParent(GameObject.Find("CharacterPanel").transform);
     }
     public virtual string GetInformation()
     {

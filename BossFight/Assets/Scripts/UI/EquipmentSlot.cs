@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public enum EquipType
 {
@@ -19,6 +20,7 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     //Component vars
     EntityStats m_Stats;
     CanvasRenderer m_Renderer;
+    Image m_ItemImage;
 
     //Hover vars
     bool m_IsHover = false;
@@ -29,16 +31,30 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         m_Stats = GameObject.FindGameObjectWithTag("Player").GetComponent<EntityStats>();
         m_Renderer = GetComponent<CanvasRenderer>();
+        m_ItemImage = transform.FindChild("ItemImage").GetComponentInChildren<Image>();
 
         if (m_Renderer)
             m_StartColor = m_Renderer.GetColor();
+
+        if (m_ItemImage)
+            m_ItemImage.enabled = false;
 	}
 	
 	void Update()
     {
         if (GetItem())
-            m_Item.transform.position = transform.position;
-	}
+        {
+            if (!m_ItemImage.isActiveAndEnabled)
+                m_ItemImage.enabled = true;
+            m_ItemImage.sprite = m_Item.GetImage().sprite;
+            m_ItemImage.color = m_Item.GetImage().color;
+        }
+        else
+        {
+            if (m_ItemImage.isActiveAndEnabled)
+                m_ItemImage.enabled = false;
+        }
+    }
 
     public void EquipItem(Item item)
     {

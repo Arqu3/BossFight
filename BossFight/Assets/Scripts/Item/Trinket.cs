@@ -3,8 +3,9 @@ using System.Collections;
 
 public class Trinket : Item
 {
-    void Start()
+    public override void Start()
     {
+        base.Start();
         m_ItemType = ItemType.Equipable;
         m_EquipType = EquipType.Trinket;
 

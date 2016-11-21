@@ -16,6 +16,7 @@ public class Grid : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     CanvasRenderer m_Renderer;
     Color m_StartColor;
     Color m_CurColor = Color.green;
+    Image m_ItemImage;
 
 	void Start ()
     {
@@ -23,12 +24,27 @@ public class Grid : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 
         if (m_Renderer)
             m_StartColor = m_Renderer.GetColor();
-	}
+
+        m_ItemImage = transform.FindChild("ItemImage").GetComponent<Image>();
+
+        if (m_ItemImage)
+            m_ItemImage.enabled = false;
+    }
 
     void Update()
     {
-        if (m_Item)
-            m_Item.transform.position = transform.position;
+        if (GetItem())
+        {
+            if (!m_ItemImage.isActiveAndEnabled)
+                m_ItemImage.enabled = true;
+            m_ItemImage.sprite = m_Item.GetImage().sprite;
+            m_ItemImage.color = m_Item.GetImage().color;
+        }
+        else
+        {
+            if (m_ItemImage.isActiveAndEnabled)
+                m_ItemImage.enabled = false;
+        }
     }
 
     public void OnPointerEnter(PointerEventData pData)
