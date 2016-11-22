@@ -244,7 +244,7 @@ public class EntityStats : MonoBehaviour
         m_CanBeKnockedback = state;
     }
 
-    //Candie functions
+    //Can die functions
     public bool GetCanDie()
     {
         return m_CanDie;

@@ -24,7 +24,7 @@ public class PlayerInventory : MonoBehaviour
     List<Grid> m_Grid = new List<Grid>();
     List<EquipmentSlot> m_EquipSlots = new List<EquipmentSlot>();
 
-    public GameObject itemPrefab;
+    public List<GameObject> m_ItemPrefabs = new List<GameObject>();
 
     //Component vars
     UIController m_UIController;
@@ -66,14 +66,27 @@ public class PlayerInventory : MonoBehaviour
         CalculateInvGrid();
         SpawnInventorySlots();
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < m_ItemPrefabs.Count; i++)
         {
-            GameObject clone = (GameObject)Instantiate(itemPrefab);
-            clone.transform.SetParent(m_UIController.GetCharacterPanel());
-            clone.transform.localScale = new Vector3(1, 1, 1);
-            if (clone.GetComponent<Item>())
-                AddItem(clone.GetComponent<Item>());
+            if (m_ItemPrefabs[i])
+            {
+                GameObject clone = (GameObject)Instantiate(m_ItemPrefabs[i]);
+                clone.transform.SetParent(m_UIController.GetCharacterPanel());
+                clone.transform.localScale = new Vector3(1, 1, 1);
+
+                if (clone.GetComponent<Item>())
+                    AddItem(clone.GetComponent<Item>());
+            }
         }
+
+        //for (int i = 0; i < 5; i++)
+        //{
+        //    GameObject clone = (GameObject)Instantiate(m_ItemPrefabs);
+        //    clone.transform.SetParent(m_UIController.GetCharacterPanel());
+        //    clone.transform.localScale = new Vector3(1, 1, 1);
+        //    if (clone.GetComponent<Item>())
+        //        AddItem(clone.GetComponent<Item>());
+        //}
     }
 
     void Update()
@@ -298,7 +311,7 @@ public class PlayerInventory : MonoBehaviour
                     if (m_Grid[i].GetItem())
                     {
                         m_ItemDescText.gameObject.SetActive(true);
-                        m_ItemDescText.text = m_Grid[i].GetItem().GetInformation();
+                        m_ItemDescText.text = m_Grid[i].GetItem().GetInformation(m_ItemDescText2);
                         m_ItemDescText2.text = m_ItemDescText.text;
                         m_ItemDescText.transform.position = m_Grid[i].transform.position - 
                             new Vector3(0.0f, (m_ItemDescText.rectTransform.sizeDelta.y + m_Grid[i].GetComponent<RectTransform>().sizeDelta.y) / 2f, 0.0f) * UIController.m_Scalefactor;
@@ -310,7 +323,7 @@ public class PlayerInventory : MonoBehaviour
                     if (m_EquipSlots[j].GetItem())
                     {
                         m_ItemDescText.gameObject.SetActive(true);
-                        m_ItemDescText.text = m_EquipSlots[j].GetItem().GetInformation();
+                        m_ItemDescText.text = m_EquipSlots[j].GetItem().GetInformation(m_ItemDescText2);
                         m_ItemDescText2.text = m_ItemDescText.text;
                         m_ItemDescText.transform.position = m_EquipSlots[j].transform.position -
                             new Vector3(0.0f, (m_ItemDescText.rectTransform.sizeDelta.y + m_EquipSlots[j].GetComponent<RectTransform>().sizeDelta.y) / 2f, 0.0f) * UIController.m_Scalefactor;

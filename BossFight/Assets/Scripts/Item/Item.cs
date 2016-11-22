@@ -113,13 +113,16 @@ public class Item : MonoBehaviour
             transform.localPosition = Vector3.zero;
         }
         else
+        {
             transform.SetParent(GameObject.Find("CharacterPanel").transform);
+            transform.localPosition = new Vector3(Screen.width * 2.0f, Screen.height, 0.0f);
+        }
     }
-    public virtual string GetInformation()
+    public virtual string GetInformation(Text text)
     {
         string s = "";
 
-        s += GetName() + "\n";
+        s += "<color=" + GetNameColor() + ">" + GetName() + "\n</color>";
 
         if (m_MaxHealth != 0)
             s += m_MaxHealth.ToString() + " to max health\n";
@@ -146,10 +149,12 @@ public class Item : MonoBehaviour
             s += SetMultiText(m_AttackSpeedMulti) + "attack speed\n";
 
         if (GetInstruction() != "")
-            s += GetInstruction() + "\n";
+            s += "<color=#ff0000ff>" + GetInstruction() + "\n</color>";
 
         if (GetDescription() != "")
-            s += GetDescription();
+            s += "<color=#d1c458ff>" + GetDescription() + "</color>";
+
+        s = s.Replace("NL", "\n");
 
         return s;
     }
@@ -169,5 +174,42 @@ public class Item : MonoBehaviour
         }
 
         return s;
+    }
+
+    string GetNameColor()
+    {
+        string color = "";
+
+        switch (m_Rarity)
+        {
+            case Rarity.Trash:
+                //Gray
+                color = "#808080ff";
+                break;
+            case Rarity.Common:
+                //White
+                color = "#ffffffff";
+                break;
+            case Rarity.Uncommon:
+                //Green/lime
+                color = "#00ff00ff";
+                break;
+            case Rarity.Rare:
+                //Blue
+                color = "#0000ffff";
+                break;
+            case Rarity.Epic:
+                //Purple
+                color = "#800080ff";
+                break;
+            case Rarity.Legendary:
+                //Orange
+                color = "#ffa500ff";
+                break;
+            default:
+                break;
+        }
+
+        return color;
     }
 }

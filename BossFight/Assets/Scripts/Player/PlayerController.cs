@@ -9,8 +9,7 @@ public enum MovementState
     GrapplingHook
 }
 
-[RequireComponent (typeof(EntityStats))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : Entity
 {
     //Public vars
     public MovementState m_State;
@@ -26,12 +25,6 @@ public class PlayerController : MonoBehaviour
     public float m_BreakHookDist = 2.0f;
 
     public float m_MaxCharge = 3.0f;
-                    
-    //Component vars
-	Rigidbody m_Rigidbody;
-    NavMeshAgent m_Agent;
-    EntityStats m_Stats;
-    Healthbar m_Chargebar;
 
     //Movement vars
     Vector3 m_Velocity;
@@ -72,34 +65,23 @@ public class PlayerController : MonoBehaviour
     bool m_IsSpecialAttack = false;
 
     //Charge vars
-    float m_CurCharge = 0.0f;
-    bool m_IsCharging = false;
+    float m_SpecialCharge = 0.0f;
 
-	void Start()
+    public override void Start()
 	{
+        base.Start();
+
         m_CurDashCD = m_DashCD;
         m_CurHookCD = m_HookCD;
 
         m_State = MovementState.Idle;
 
-		m_Rigidbody = GetComponent<Rigidbody>();
         m_PointerTransform = transform.FindChild("Rotation");
         m_AttackObj = m_PointerTransform.FindChild("Hit").gameObject;
         m_SpecialAttackObj = m_PointerTransform.FindChild("SpecialHit").gameObject;
         m_HookRope = m_PointerTransform.FindChild("HookRope").gameObject;
         m_HookRope.SetActive(false);
-        m_Agent = GetComponent<NavMeshAgent>();
-        m_Agent.updateRotation = false;
-        m_Stats = GetComponent<EntityStats>();
-        m_Chargebar = transform.FindChild("Chargebar").GetComponent<Healthbar>();
-
-        if (m_Chargebar)
-        {
-            m_Chargebar.SetScale(0);
-            m_Chargebar.gameObject.SetActive(false);
-        }
-        else
-            Debug.Log("Player could not find chargebar!");
+        GetAgent().updateRotation = false;
 
         if (m_AttackObj)
             m_AttackObj.SetActive(false);
@@ -107,61 +89,59 @@ public class PlayerController : MonoBehaviour
         if (m_SpecialAttackObj)
             m_SpecialAttackObj.SetActive(false);
 
-        m_CurSpeed = m_Stats.GetMovementSpeed();
+        m_CurSpeed = GetStats().GetMovementSpeed();
 	}
 	
-	void Update()
+	public override void Update()
 	{
         CheckState();
 
-        MovementUpdate();
+        MoveUpdate();
 
         DashUpdate();
 
         HookUpdate();
 
-        RotationUpdate();
+        RotationUpdate(m_PointerTransform, m_PointerTransform);
 
         InvincibleUpdate();
 
         AttackUpdate();
-
-        ChargeUpdate();
     }
 
-    void RotationUpdate()
+    public override void RotationUpdate(Transform myTransform, Transform towards)
     {
-        Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(m_PointerTransform.position);
+        Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(myTransform.position);
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         if (!m_IsAttack && !m_IsSpecialAttack && !m_HasHookHit)
-            m_PointerTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
+            myTransform.rotation = Quaternion.AngleAxis(angle, Vector3.down);
 
         //m_PointerTransform.Rotate(90, 0, 0);
     }
 
     void InvincibleUpdate()
     {
-        if (!m_Stats.GetCanTakeDMG())
+        if (!GetStats().GetCanTakeDMG())
         {
             m_InvTimer -= Time.deltaTime;
             if (m_InvTimer <= 0.0f)
             {
                 m_InvTimer = 0.0f;
-                m_Stats.SetCanTakeDMG(true);
+                GetStats().SetCanTakeDMG(true);
             }
         }
     }
 
-    void MovementUpdate()
+    public override void MoveUpdate()
     {
         if (IsMoving() && !m_IsSpecialAttack && !m_IsHookUsed)
         {
-            m_CurSpeed = Mathf.Clamp(m_CurSpeed, 0.0f, m_Stats.GetMovementSpeed());
+            m_CurSpeed = Mathf.Clamp(m_CurSpeed, 0.0f, GetStats().GetMovementSpeed());
             m_Velocity = new Vector3(Mathf.Lerp(0, Input.GetAxis("Horizontal") * m_CurSpeed, 1f), 0, Mathf.Lerp(0, Input.GetAxis("Vertical") * m_CurSpeed, 1f));
-            m_Rigidbody.velocity = Vector3.ClampMagnitude(m_Velocity, m_CurSpeed);
+            GetRigidbody().velocity = Vector3.ClampMagnitude(m_Velocity, m_CurSpeed);
         }
         else
-            m_Rigidbody.velocity = Vector3.zero;
+            GetRigidbody().velocity = Vector3.zero;
         //Debug.Log(m_Rigidbody.velocity.magnitude);
     }
 
@@ -186,7 +166,7 @@ public class PlayerController : MonoBehaviour
                 m_IsDashing = false;
             }
 
-            m_Rigidbody.velocity = m_DashDir.normalized * m_DashSpeed;
+            GetRigidbody().velocity = m_DashDir.normalized * m_DashSpeed;
         }
 
         if (m_IsDashCD)
@@ -204,7 +184,7 @@ public class PlayerController : MonoBehaviour
     {
         //Vector3 temp1 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         //Debug.DrawRay(transform.position, (new Vector3(temp1.x, 0, temp1.z) - new Vector3(transform.position.x, 0, transform.position.z)).normalized * m_HookDistance);
-        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttack && !m_IsCharging)
+        if (Input.GetKeyDown(KeyCode.Q) && !m_IsHookCD && !m_IsAttack && !GetIsCharging())
         {
             m_IsHookCD = true;
             Vector3 temp = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -222,7 +202,7 @@ public class PlayerController : MonoBehaviour
 
                     //Apply stun if enemy is hit
                     if (m_HookHit.collider.gameObject.tag == "Enemy")
-                        m_HookHit.collider.gameObject.GetComponent<EntityStats>().SetStunned(m_Stats.GetStunAmount());
+                        m_HookHit.collider.gameObject.GetComponent<EntityStats>().SetStunned(GetStats().GetStunAmount());
                 }
             }
         }
@@ -246,7 +226,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (Vector3.Distance(transform.position, m_HookHitPos) > m_BreakHookDist)
                 {
-                    m_Rigidbody.velocity = m_HookDir.normalized * m_HookSpeed;
+                    GetRigidbody().velocity = m_HookDir.normalized * m_HookSpeed;
 
                     m_HookRope.transform.localScale = new Vector3(dist, 0.1f, 0.1f);
                     m_HookRope.transform.localPosition = new Vector3(dist / 2f, 0, 0);
@@ -293,7 +273,7 @@ public class PlayerController : MonoBehaviour
         }
         else if (m_Velocity.magnitude < 2)
         {
-            m_Rigidbody.velocity = Vector3.zero;
+            GetRigidbody().velocity = Vector3.zero;
             m_Velocity = Vector3.zero;
             SetState(MovementState.Idle);
         }
@@ -319,9 +299,9 @@ public class PlayerController : MonoBehaviour
 
     void SetInvincible(float time)
     {
-        if (m_Stats.GetCanTakeDMG())
+        if (GetStats().GetCanTakeDMG())
         {
-            m_Stats.SetCanTakeDMG(false);
+            GetStats().SetCanTakeDMG(false);
             m_InvTimer = time;
         }
     }
@@ -331,11 +311,11 @@ public class PlayerController : MonoBehaviour
         return transform.position;
     }
 
-    void AttackUpdate()
+    public override void AttackUpdate()
     {
         if (Input.GetMouseButton(0))
         {
-            if (m_CanAttack && !m_IsCharging && !m_IsAttack && !m_IsSpecialAttack)
+            if (m_CanAttack && !GetIsCharging() && !m_IsAttack && !m_IsSpecialAttack)
             {
                 m_CanAttack = false;
                 if (m_AttackTimer == 0.0f)
@@ -349,7 +329,7 @@ public class PlayerController : MonoBehaviour
         if (!m_CanAttack)
         {
             m_AttackTimer += Time.deltaTime;
-            if (m_AttackTimer >= m_Stats.GetAttackSpeed())
+            if (m_AttackTimer >= GetStats().GetAttackSpeed())
             {
                 m_CanAttack = true;
                 m_AttackTimer = 0.0f;
@@ -359,55 +339,53 @@ public class PlayerController : MonoBehaviour
         if (m_AttackObj.activeSelf)
         {
             m_CurAttackTime += Time.deltaTime;
-            m_CurSpeed = m_Stats.GetMovementSpeed() / 3f;
+            m_CurSpeed = GetStats().GetMovementSpeed() / 3f;
         }
         else
-            m_CurSpeed = m_Stats.GetMovementSpeed();
+            m_CurSpeed = GetStats().GetMovementSpeed();
 
-        if (m_CurAttackTime >= m_Stats.GetAttackTime())
+        if (m_CurAttackTime >= GetStats().GetAttackTime())
         {
             m_IsAttack = false;
             m_CurAttackTime = 0.0f;
             m_AttackObj.SetActive(false);
         }
+
+        ChargeUpdate(Input.GetMouseButton(1), m_MaxCharge);
     }
 
-    void ChargeUpdate()
+    public override void ChargeUpdate(bool trueState, float maxValue)
     {
-        if (Input.GetMouseButton(1) && m_CurCharge <= m_MaxCharge && !m_AttackObj.activeSelf && !m_IsAttack)
+        if (!m_AttackObj.activeSelf && !m_IsAttack)
         {
-            m_Chargebar.gameObject.SetActive(true);
-            m_IsCharging = true;
-            m_CurCharge += Time.deltaTime;
-            m_CurCharge = Mathf.Clamp(m_CurCharge, 0.0f, m_MaxCharge);
-            m_Chargebar.ChangeScale(Time.deltaTime / m_MaxCharge);
+            if (trueState)
+            {
+                m_SpecialCharge = GetCurrentCharge();
+                m_CurSpeed = GetStats().GetMovementSpeed() / 2.0f;
+            }
 
-            m_CurSpeed = m_Stats.GetMovementSpeed() / 2;
-        }
-        else if (Input.GetMouseButtonUp(1) && m_CurCharge > 0.0f)
-        {
-            m_Stats.SetCurrentCharge(m_CurCharge);
-            m_SpecialAttackObj.SetActive(true);
+            if (!trueState && GetCurrentCharge() > 0.0f)
+            {
+                GetStats().SetCurrentCharge(m_SpecialCharge);
+                m_SpecialAttackObj.SetActive(true);
 
-            m_CurCharge = 0.0f;
-            m_IsCharging = false;
-            m_Chargebar.SetScale(0);
-            m_Chargebar.gameObject.SetActive(false);
+                m_IsSpecialAttack = true;
 
-            m_IsSpecialAttack = true;
+                m_CurSpeed = GetStats().GetMovementSpeed();
+            }
 
-            m_CurSpeed = m_Stats.GetMovementSpeed();
-        }
+            if (m_SpecialAttackObj.activeSelf)
+                m_CurAttackTime += Time.deltaTime;
 
-        if (m_SpecialAttackObj.activeSelf)
-            m_CurAttackTime += Time.deltaTime;
+            if (m_CurAttackTime >= GetStats().GetAttackTime())
+            {
+                m_IsSpecialAttack = false;
+                m_CurAttackTime = 0.0f;
+                GetStats().SetCurrentCharge(0.0f);
+                m_SpecialAttackObj.SetActive(false);
+            }
 
-        if (m_CurAttackTime >= m_Stats.GetAttackTime())
-        {
-            m_IsSpecialAttack = false;
-            m_CurAttackTime = 0.0f;
-            m_Stats.SetCurrentCharge(0.0f);
-            m_SpecialAttackObj.SetActive(false);
+            base.ChargeUpdate(trueState, maxValue);
         }
     }
 

@@ -20,7 +20,7 @@ public class Healthbar : MonoBehaviour
     EntityStats m_EntityStats;
     float m_ScaleFactor;
 
-	void Start()
+    void Awake()
     {
         m_Slider = transform.FindChild("Slider").gameObject;
         m_Background = transform.FindChild("Background").gameObject;

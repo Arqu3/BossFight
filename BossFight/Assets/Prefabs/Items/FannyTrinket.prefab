@@ -42,10 +42,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ItemType: 0
   m_EquipType: 2
-  m_Rarity: 1
+  m_Rarity: 5
   m_ItemName: Fannybag
   m_Instruction: 
-  m_Description: '"How can one man have all that power?"'
+  m_Description: '"How can one man have all that power?"NL-Agnor of Mema'
   m_IsStackable: 0
   m_MaxHealth: -50
   m_HealthMulti: 0

@@ -79,6 +79,8 @@ public class Projectile : MonoBehaviour
                     for (int i = 0; i < m_OnDestroyNum; i++)
                     {
                         GameObject clone = (GameObject)Instantiate(m_OnDestroySpawn, transform.position, transform.rotation);
+                        if (clone.GetComponent<Projectile>())
+                            clone.GetComponent<Projectile>().m_Mode = m_Mode;
                     }
                 }
             }
