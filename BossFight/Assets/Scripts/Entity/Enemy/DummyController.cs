@@ -13,6 +13,7 @@ public class DummyController : MonoBehaviour
 	
 	void Update ()
     {
+        //Set current health to full if below 1
         if (m_Stats.GetHealth() < 1)
             m_Stats.SetHealth(m_Stats.GetMaxHealth());
 	}

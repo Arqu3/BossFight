@@ -6,9 +6,6 @@ public class EnemyMelee : Entity
     //Public vars
     public Transform m_Target;
 
-    //Position vars
-    Vector3 m_MoveToPosition;
-
     //Rotation vars
     Transform m_Rotation;
 
@@ -24,19 +21,25 @@ public class EnemyMelee : Entity
     {
         base.Start();
 
+        //Find rotation, attackobj
         m_Rotation = transform.FindChild("Rotation");
 
         m_AttackObj = m_Rotation.transform.FindChild("Hit").gameObject;
         if (m_AttackObj)
+        {
+            m_AttackObj.GetComponentInChildren<AttackScan>().m_Stats = GetStats();
             m_AttackObj.SetActive(false);
+        }
 
+        //Set target if none is assigned
         if (!m_Target)
             SetTarget(GameObject.Find("Player").transform);
-        m_MoveToPosition = transform.position;
 	}
 	
 	public override void Update()
     {
+        base.Update();
+        //Update as normal if not stunned, else disable agent and reset attack
         if (!GetStats().GetIsStunned())
         {
             if (!GetAgent().enabled)
@@ -63,9 +66,16 @@ public class EnemyMelee : Entity
     {
         if (m_Target)
         {
+            //Rotate towards current target if not attacking
             if (!m_IsAttack)
-                RotationUpdate(m_Rotation, m_Target);
+            {
+                if (IsInAggroRange())
+                    RotationUpdate(m_Rotation, m_Target.position);
+                else
+                    RotationUpdate(m_Rotation, GetMovetoPosition());
+            }
 
+            //Move towards player if is in aggro range and not attacking
             if (IsInAggroRange())
             {
                 GetAgent().stoppingDistance = GetStats().GetAttackRange();
@@ -86,6 +96,7 @@ public class EnemyMelee : Entity
             }
         }
 
+        //When to disable chargebar
         if ((!m_IsAttack && !IsInAttackRange()) || !IsInAggroRange())
         {
             if (GetChargebar().gameObject.activeSelf)
@@ -99,6 +110,7 @@ public class EnemyMelee : Entity
 
     public override void AttackUpdate()
     {
+        //Toggle attack
         if (m_CanAttack)
         {
             m_CanAttack = false;
@@ -109,6 +121,7 @@ public class EnemyMelee : Entity
             }
         }
 
+        //Attack timer
         if (!m_CanAttack)
         {
             m_AttackTimer += Time.deltaTime;
@@ -122,6 +135,7 @@ public class EnemyMelee : Entity
         if (m_AttackObj.activeSelf)
             m_CurAttackTime += Time.deltaTime;
 
+        //End of attack
         if (m_CurAttackTime >= GetStats().GetAttackTime())
         {
             m_IsAttack = false;
@@ -129,6 +143,7 @@ public class EnemyMelee : Entity
             m_AttackObj.SetActive(false);
         }
 
+        //Get time between attacks and set scale on chargebar
         float attackTime = GetStats().GetAttackSpeed() - GetStats().GetAttackTime();
         ChargeUpdate(!m_IsAttack, attackTime);
     }
@@ -140,21 +155,6 @@ public class EnemyMelee : Entity
     bool IsInAttackRange()
     {
         return Vector3.Distance(transform.position, m_Target.position) <= GetStats().GetAttackRange();
-    }
-
-    public override void MoveUpdate()
-    {
-        GetAgent().speed = GetStats().GetMovementSpeed() / 3.0f;
-        GetAgent().stoppingDistance = 0.5f;
-
-        if (Vector3.Distance(transform.position, m_MoveToPosition) > 2)
-            GetAgent().SetDestination(m_MoveToPosition);
-        else
-        {
-            NavMeshHit hit;
-            NavMesh.SamplePosition(new Vector3(Random.Range(SceneController.m_MinX, SceneController.m_MaxX), 0, Random.Range(SceneController.m_MinZ, SceneController.m_MaxZ)), out hit, 10, 1);
-            m_MoveToPosition = hit.position;
-        }
     }
 
     public void SetTarget(Transform target)

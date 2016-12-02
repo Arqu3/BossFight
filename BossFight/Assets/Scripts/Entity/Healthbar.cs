@@ -29,6 +29,7 @@ public class Healthbar : MonoBehaviour
 
         m_EntityStats = transform.parent.GetComponent<EntityStats>();
 
+        //Set scalefactor
         if (m_EntityStats)
         {
             if (m_Mode.Equals(Mode.Health))
@@ -41,6 +42,7 @@ public class Healthbar : MonoBehaviour
         }
     }
 
+    //Change scale
     public void ChangeScale(float value)
     {
         float f = value * m_ScaleFactor;
@@ -52,6 +54,7 @@ public class Healthbar : MonoBehaviour
         m_Slider.transform.localPosition = new Vector3(Mathf.Clamp(m_Slider.transform.localPosition.x, -m_Background.transform.localScale.x / 2, 0), 0, 0);
     }
 
+    //Set scale
     public void SetScale(float value)
     {
         float f = value * m_ScaleFactor;
@@ -65,6 +68,7 @@ public class Healthbar : MonoBehaviour
         m_Slider.transform.localPosition = new Vector3(Mathf.Clamp(m_Slider.transform.localPosition.x, -m_Background.transform.localScale.x / 2, 0), 0, 0);
     }
 
+    //Changes scale factor depending on value
     public void ChangeScaleFactor(float value)
     {
         if (value != 0.0f)

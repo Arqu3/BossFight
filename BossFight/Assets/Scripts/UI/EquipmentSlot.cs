@@ -19,6 +19,7 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     //Component vars
     EntityStats m_Stats;
+    PlayerController m_Player;
     CanvasRenderer m_Renderer;
     Image m_ItemImage;
 
@@ -30,6 +31,7 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 	void Start()
     {
         m_Stats = GameObject.FindGameObjectWithTag("Player").GetComponent<EntityStats>();
+        m_Player = m_Stats.gameObject.GetComponent<PlayerController>();
         m_Renderer = GetComponent<CanvasRenderer>();
         m_ItemImage = transform.FindChild("ItemImage").GetComponentInChildren<Image>();
 
@@ -62,6 +64,9 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         m_Item.SetEquiped(true);
 
         ChangeStats(1);
+
+        if (GetEqType().Equals(EquipType.Weapon))
+            m_Player.EquipWeapon(m_Item.GetComponent<Weapon>());
     }
     public void UnEquipItem()
     {
@@ -70,6 +75,9 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         m_Item.SetEquiped(false);
         m_Item = null;
+
+        if (GetEqType().Equals(EquipType.Weapon))
+            m_Player.EquipWeapon(null);
     }
 
     public Item GetItem()
@@ -109,13 +117,17 @@ public class EquipmentSlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         m_Stats.AddMaxHealth(m_Item.m_MaxHealth * multiplier);
         m_Stats.AddHealthMulti(m_Item.m_HealthMulti * multiplier);
-        m_Stats.AddDamage(m_Item.m_Damage * multiplier);
+
+        m_Stats.AddMinDamage(m_Item.m_MinDamage * multiplier);
+        m_Stats.AddMaxDamage(m_Item.m_MaxDamage * multiplier);
         m_Stats.AddDamageMulti(m_Item.m_DamageMulti * multiplier);
+
         m_Stats.AddAttackSpeed(m_Item.m_AttackSpeed * multiplier);
         m_Stats.AddAttackSpeedMulti(m_Item.m_AttackSpeedMulti * multiplier);
-        m_Stats.AddAttackTime(m_Item.m_AttackTime * multiplier);
+
         m_Stats.AddMovementSpeed(m_Item.m_MovementSpeed * multiplier);
         m_Stats.AddMovementMulti(m_Item.m_MovementMulti * multiplier);
+
         m_Stats.AddKnockbackForce(m_Item.m_KnockbackForce * multiplier);
         m_Stats.AddKnockbackMulti(m_Stats.m_KnockbackMulti * multiplier);
     }

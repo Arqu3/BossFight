@@ -8,8 +8,6 @@ public class Trinket : Item
         base.Start();
         m_ItemType = ItemType.Equipable;
         m_EquipType = EquipType.Trinket;
-
-        //Debug.Log(GetIType() + " " + GetEType() + " " + IsEquipAble());	
     }
 
     void Update()

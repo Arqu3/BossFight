@@ -26,6 +26,8 @@ public class PlayerController : Entity
 
     public float m_MaxCharge = 3.0f;
 
+    public Weapon m_Weapon;
+
     //Movement vars
     Vector3 m_Velocity;
     float m_CurSpeed;
@@ -56,11 +58,6 @@ public class PlayerController : Entity
     float m_InvTimer = 0.0f;
 
     //Attack vars
-    bool m_CanAttack = true;
-    float m_AttackTimer = 0.0f;
-    GameObject m_AttackObj;
-    GameObject m_SpecialAttackObj;
-    float m_CurAttackTime = 0.0f;
     bool m_IsAttack = false;
     bool m_IsSpecialAttack = false;
 
@@ -77,17 +74,9 @@ public class PlayerController : Entity
         m_State = MovementState.Idle;
 
         m_PointerTransform = transform.FindChild("Rotation");
-        m_AttackObj = m_PointerTransform.FindChild("Hit").gameObject;
-        m_SpecialAttackObj = m_PointerTransform.FindChild("SpecialHit").gameObject;
         m_HookRope = m_PointerTransform.FindChild("HookRope").gameObject;
         m_HookRope.SetActive(false);
         GetAgent().updateRotation = false;
-
-        if (m_AttackObj)
-            m_AttackObj.SetActive(false);
-
-        if (m_SpecialAttackObj)
-            m_SpecialAttackObj.SetActive(false);
 
         m_CurSpeed = GetStats().GetMovementSpeed();
 	}
@@ -96,21 +85,22 @@ public class PlayerController : Entity
 	{
         CheckState();
 
-        MoveUpdate();
+        MovementUpdate();
 
         DashUpdate();
 
         HookUpdate();
 
-        RotationUpdate(m_PointerTransform, m_PointerTransform);
+        RotationUpdate(m_PointerTransform, Vector3.zero);
 
         InvincibleUpdate();
 
         AttackUpdate();
     }
 
-    public override void RotationUpdate(Transform myTransform, Transform towards)
+    public override void RotationUpdate(Transform myTransform, Vector3 towards)
     {
+        //Rotate towards mouseposition
         Vector3 dir = Input.mousePosition - Camera.main.WorldToScreenPoint(myTransform.position);
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         if (!m_IsAttack && !m_IsSpecialAttack && !m_HasHookHit)
@@ -119,6 +109,7 @@ public class PlayerController : Entity
         //m_PointerTransform.Rotate(90, 0, 0);
     }
 
+    //Timer for invincibility
     void InvincibleUpdate()
     {
         if (!GetStats().GetCanTakeDMG())
@@ -132,7 +123,8 @@ public class PlayerController : Entity
         }
     }
 
-    public override void MoveUpdate()
+    //How and when to move
+    void MovementUpdate()
     {
         if (IsMoving() && !m_IsSpecialAttack && !m_IsHookUsed)
         {
@@ -145,6 +137,7 @@ public class PlayerController : Entity
         //Debug.Log(m_Rigidbody.velocity.magnitude);
     }
 
+    //Dash in movement-direction when pressing space
     void DashUpdate()
     {
         if (Input.GetKeyDown(KeyCode.Space) && !m_IsDashCD) //&& !m_IsAttackActive && !m_IsCharging)
@@ -180,6 +173,7 @@ public class PlayerController : Entity
         }
     }
 
+    //Shoot a hook in mouse-direction when pressing Q
     void HookUpdate()
     {
         //Vector3 temp1 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -287,13 +281,16 @@ public class PlayerController : Entity
         return false;
     }
 
+    //Check if player is currently in a non-friendly area
     public bool IsInCombatArea()
     {
         //Debug.DrawRay(transform.position, Vector3.down * 5.0f);
         RaycastHit hit;
-        Physics.Raycast(transform.position, Vector3.down, out hit, 5.0f, m_LayerMask);
-        if (hit.transform.root.gameObject.tag == "CombatArea")
-            return true;
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 5.0f, m_LayerMask))
+        {
+            if (hit.transform.root.gameObject.tag == "CombatArea")
+                return true;
+        }
         return false;
     }
 
@@ -313,50 +310,39 @@ public class PlayerController : Entity
 
     public override void AttackUpdate()
     {
-        if (Input.GetMouseButton(0))
+        if (GetWeapon())
         {
-            if (m_CanAttack && !GetIsCharging() && !m_IsAttack && !m_IsSpecialAttack)
-            {
-                m_CanAttack = false;
-                if (m_AttackTimer == 0.0f)
-                {
-                    m_AttackObj.SetActive(true);
-                    m_IsAttack = true;
-                }
-            }
-        }
+            GetWeapon().AttackUpdate(GetStats().GetAttackSpeed(), GetStats().GetAttackTime());
+            GetWeapon().SpecialAttackUpdate(GetStats().GetAttackSpeed(), GetStats().GetAttackTime());
 
-        if (!m_CanAttack)
-        {
-            m_AttackTimer += Time.deltaTime;
-            if (m_AttackTimer >= GetStats().GetAttackSpeed())
-            {
-                m_CanAttack = true;
-                m_AttackTimer = 0.0f;
-            }
-        }
+            if (GetWeapon().AttackObjActive())
+                m_CurSpeed = GetStats().GetMovementSpeed() / 3f;
+            else
+                m_CurSpeed = GetStats().GetMovementSpeed();
 
-        if (m_AttackObj.activeSelf)
-        {
-            m_CurAttackTime += Time.deltaTime;
-            m_CurSpeed = GetStats().GetMovementSpeed() / 3f;
+            m_IsAttack = GetWeapon().GetIsAttack();
+            m_IsSpecialAttack = GetWeapon().GetIsSpecial();
+                
+            if (GetWeapon().GetBasicButton() && !GetIsCharging())
+                GetWeapon().Attack();
+            else if (!GetWeapon().GetSpecialButton())
+                GetWeapon().SpecialAttack(GetCurrentCharge());
+
+            if (GetWeapon().GetCanCharge())
+                ChargeUpdate(Input.GetMouseButton(1), m_MaxCharge);
+            else
+                ChargeUpdate(false, 0.0f);                
         }
         else
-            m_CurSpeed = GetStats().GetMovementSpeed();
-
-        if (m_CurAttackTime >= GetStats().GetAttackTime())
         {
             m_IsAttack = false;
-            m_CurAttackTime = 0.0f;
-            m_AttackObj.SetActive(false);
+            m_IsSpecialAttack = false;
         }
-
-        ChargeUpdate(Input.GetMouseButton(1), m_MaxCharge);
     }
 
     public override void ChargeUpdate(bool trueState, float maxValue)
     {
-        if (!m_AttackObj.activeSelf && !m_IsAttack)
+        if (!GetWeapon().AttackObjActive() && !m_IsAttack)
         {
             if (trueState)
             {
@@ -367,26 +353,21 @@ public class PlayerController : Entity
             if (!trueState && GetCurrentCharge() > 0.0f)
             {
                 GetStats().SetCurrentCharge(m_SpecialCharge);
-                m_SpecialAttackObj.SetActive(true);
-
-                m_IsSpecialAttack = true;
-
                 m_CurSpeed = GetStats().GetMovementSpeed();
-            }
-
-            if (m_SpecialAttackObj.activeSelf)
-                m_CurAttackTime += Time.deltaTime;
-
-            if (m_CurAttackTime >= GetStats().GetAttackTime())
-            {
-                m_IsSpecialAttack = false;
-                m_CurAttackTime = 0.0f;
-                GetStats().SetCurrentCharge(0.0f);
-                m_SpecialAttackObj.SetActive(false);
             }
 
             base.ChargeUpdate(trueState, maxValue);
         }
+    }
+
+    public void EquipWeapon(Weapon newWeapon)
+    {
+        m_Weapon = newWeapon;
+    }
+
+    public Weapon GetWeapon()
+    {
+        return m_Weapon;
     }
 
     public bool GetIsHookReady()

@@ -3,19 +3,34 @@ using System.Collections;
 
 public class Weapon : Item
 {
-	public override void Start()
+    public bool m_IsAttack = false;
+    public bool m_IsSpecialAttack = false;
+    public bool m_CanCharge = true;
+
+    public override void Start()
     {
         base.Start();
         m_ItemType = ItemType.Equipable;
         m_EquipType = EquipType.Weapon;
+	}
 
-        //Debug.Log(GetIType() + " " + GetEType() + " " + IsEquipAble());	
-	}
-	
-	void Update()
+    public virtual void Attack()
     {
-	
-	}
+
+    }
+    public virtual void AttackUpdate(float attackSpeed, float attackTime)
+    {
+
+    }
+
+    public virtual void SpecialAttack(float charge)
+    {
+
+    }
+    public virtual void SpecialAttackUpdate(float attackSpeed, float attackTime)
+    {
+
+    }
 
     public override ItemType GetIType()
     {
@@ -35,5 +50,37 @@ public class Weapon : Item
     public override bool GetIsStackable()
     {
         return false;
+    }
+
+    public virtual bool GetBasicButton()
+    {
+        return Input.GetMouseButton(0);
+    }
+
+    public virtual bool GetSpecialButton()
+    {
+        return Input.GetMouseButton(1);
+    }
+
+    public virtual bool AttackObjActive()
+    {
+        return false;
+    }
+    public virtual bool SpecialObjActive()
+    {
+        return false;
+    }
+
+    public virtual bool GetIsAttack()
+    {
+        return m_IsAttack;
+    }
+    public virtual bool GetIsSpecial()
+    {
+        return m_IsSpecialAttack;
+    }
+    public bool GetCanCharge()
+    {
+        return m_CanCharge;
     }
 }

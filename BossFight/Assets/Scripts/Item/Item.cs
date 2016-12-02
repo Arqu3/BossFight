@@ -35,7 +35,8 @@ public class Item : MonoBehaviour
     //Public stat vars
     public int m_MaxHealth = 0;
     public float m_HealthMulti = 0.0f;
-    public int m_Damage = 0;
+    public int m_MinDamage = 0;
+    public int m_MaxDamage = 0;
     public float m_DamageMulti = 0.0f;
     public float m_MovementSpeed = 0.0f;
     public float m_MovementMulti = 0.0f;
@@ -56,15 +57,19 @@ public class Item : MonoBehaviour
 
     //Component vars
     Image m_Image;
+
     public virtual void Start()
     {
         m_Image = GetComponent<Image>();
+        m_MinDamage = Mathf.Clamp(m_MinDamage, 0, m_MaxDamage);
     }
+
     public Image GetImage()
     {
         return m_Image;
     }
 
+    //Get and set states/values etc
     bool m_IsEquiped = false;
 
     public virtual ItemType GetIType()
@@ -83,17 +88,20 @@ public class Item : MonoBehaviour
     {
         return m_IsStackable;
     }
+    //Set text color in string
     public virtual string GetDescription()
     {
-        return m_Description;
+        return "<color=#d1c458ff>" + m_Description + "</color>";
     }
+    //Set text color in string
     public virtual string GetInstruction()
     {
-        return m_Instruction;
+        return "<color=#ff0000ff>" + m_Instruction + "</color>";
     }
+    //Set text color in string
     public virtual string GetName()
     {
-        return m_ItemName;
+        return "<color=" + GetNameColor() + ">" + m_ItemName + "</color>";
     }
     public virtual Rarity GetRarity()
     {
@@ -103,6 +111,8 @@ public class Item : MonoBehaviour
     {
         return m_IsEquiped;
     }
+
+    //Set parent to player if currently equiped, otherwise set parent to UI
     public virtual void SetEquiped(bool state)
     {
         m_IsEquiped = state;
@@ -118,41 +128,43 @@ public class Item : MonoBehaviour
             transform.localPosition = new Vector3(Screen.width * 2.0f, Screen.height, 0.0f);
         }
     }
+
+    //Get all non-0 stat & text values
     public virtual string GetInformation(Text text)
     {
         string s = "";
 
-        s += "<color=" + GetNameColor() + ">" + GetName() + "\n</color>";
+        s += GetName();
 
         if (m_MaxHealth != 0)
-            s += m_MaxHealth.ToString() + " to max health\n";
+            s += "\n" + m_MaxHealth.ToString() + " to max health";
 
         if (m_HealthMulti != 0)
-            s += SetMultiText(m_HealthMulti) + "health\n";
+            s += "\n" + SetMultiText(m_HealthMulti) + "health";
 
-        if (m_Damage != 0)
-            s += m_Damage.ToString() + " to damage\n";
+        if (m_MaxDamage != 0)
+            s += "\n" + m_MinDamage.ToString() + "-" + m_MaxDamage.ToString() + " damage";
 
         if (m_DamageMulti != 0)
-            s += SetMultiText(m_DamageMulti) + "damage\n";
+            s += "\n" + SetMultiText(m_DamageMulti) + "damage";
 
         if (m_MovementSpeed != 0)
-            s += m_MovementSpeed.ToString() + " to movement speed\n";
+            s += "\n" + m_MovementSpeed.ToString() + " to movement speed";
 
         if (m_MovementMulti != 0)
-            s += SetMultiText(m_MovementMulti) + "movement speed\n";
+            s += "\n" + SetMultiText(m_MovementMulti) + "movement speed";
 
         if (m_AttackSpeed != 0)
-            s += m_AttackSpeed.ToString() + " to attack speed\n";
+            s += "\n" + m_AttackSpeed.ToString() + " attack speed";
 
         if (m_AttackSpeedMulti != 0)
-            s += SetMultiText(m_AttackSpeedMulti) + "attack speed\n";
+            s += "\n" + SetMultiTextInverted(m_AttackSpeedMulti) + "attack speed";
 
-        if (GetInstruction() != "")
-            s += "<color=#ff0000ff>" + GetInstruction() + "\n</color>";
+        if (m_Instruction != "")
+            s += "\n" + GetInstruction();
 
-        if (GetDescription() != "")
-            s += "<color=#d1c458ff>" + GetDescription() + "</color>";
+        if (m_Description != "")
+            s += "\n" + GetDescription();
 
         s = s.Replace("NL", "\n");
 
@@ -176,6 +188,24 @@ public class Item : MonoBehaviour
         return s;
     }
 
+    public string SetMultiTextInverted(float value)
+    {
+        string s = "";
+
+        if (value != 0)
+        {
+            s = (value * 100 * -1).ToString() + "% ";
+
+            if (value > 0)
+                s += "decreased ";
+            else
+                s += "increased ";
+        }
+
+        return s;
+    }
+
+    //Get different color depending on rarity
     string GetNameColor()
     {
         string color = "";

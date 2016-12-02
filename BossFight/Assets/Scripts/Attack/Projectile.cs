@@ -31,14 +31,17 @@ public class Projectile : MonoBehaviour
         m_Rigidbody = GetComponent<Rigidbody>();
         m_TotalDamage += (int)(m_BonusDamage * m_BonusMulti);
 
+        //Set X rotation
         transform.localEulerAngles = new Vector3(90, 0.0f, 0.0f);
 
+        //Set direction towards mouse from player
         m_Direction = Camera.main.ScreenToWorldPoint(Input.mousePosition) - GameObject.FindGameObjectWithTag("Player").transform.position;
         m_Direction.y = 0.0f;
 	}
 	
 	public virtual void Update()
     {
+        //Remove this is limited lifetime is set and timer is over threshold
         if (m_LimitedLifetime)
         {
             m_Lifetime -= Time.deltaTime;
@@ -50,6 +53,7 @@ public class Projectile : MonoBehaviour
 
     public virtual void OnTriggerEnter(Collider col)
     {
+        //Safety check for enemy/player entities
         string s = "";
         string s1 = "";
         if (m_Mode.Equals(ProjectileMode.Player))
@@ -63,6 +67,7 @@ public class Projectile : MonoBehaviour
             s1 = "Enemy";
         }
 
+        //Deal damage
         if (col.gameObject.tag == s)
         {
             if (col.gameObject.GetComponent<EntityStats>())
@@ -70,6 +75,8 @@ public class Projectile : MonoBehaviour
                 col.gameObject.GetComponent<EntityStats>().ChangeHealth(-m_TotalDamage);
             }
         }
+
+        //What happens when projectile hits something
         if (col.gameObject.tag != s1 && col.gameObject.tag != "Projectile" && col.gameObject.tag != "HitCollider")
         {
             if (m_OnDestroySpawn && m_OnDestroyNum > 0)

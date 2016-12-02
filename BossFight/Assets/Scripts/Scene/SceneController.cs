@@ -26,23 +26,23 @@ public class SceneController : MonoBehaviour
     float m_SpawnTimer = 0.0f;
 
     //Arena vars
-    GameObject m_Arena1;
-    public static float m_MaxX;
-    public static float m_MinX;
-    public static float m_MaxZ;
-    public static float m_MinZ;
+    //GameObject m_Arena1;
+    //public static float m_MaxX;
+    //public static float m_MinX;
+    //public static float m_MaxZ;
+    //public static float m_MinZ;
 
-    void Awake()
-    {
-        m_Arena1 = GameObject.Find("Arena1");
-        var v = m_Arena1.transform.FindChild("Plane").GetComponent<MeshRenderer>();
-        m_MaxX = v.bounds.center.x + v.bounds.extents.x;
-        m_MinX = v.bounds.center.x - v.bounds.extents.x;
+    //void Awake()
+    //{
+    //    m_Arena1 = GameObject.Find("Arena1");
+    //    var v = m_Arena1.transform.FindChild("Plane").GetComponent<MeshRenderer>();
+    //    m_MaxX = v.bounds.center.x + v.bounds.extents.x;
+    //    m_MinX = v.bounds.center.x - v.bounds.extents.x;
 
-        m_MaxZ = v.bounds.center.z + v.bounds.extents.z;
-        m_MinZ = v.bounds.center.z - v.bounds.extents.z;
-        //Debug.Log(m_MinX + " " + m_MaxX + " " + m_MinZ + " " + m_MaxZ);
-    }
+    //    m_MaxZ = v.bounds.center.z + v.bounds.extents.z;
+    //    m_MinZ = v.bounds.center.z - v.bounds.extents.z;
+    //    Debug.Log(m_MinX + " " + m_MaxX + " " + m_MinZ + " " + m_MaxZ);
+    //}
 
 	void Start()
     {

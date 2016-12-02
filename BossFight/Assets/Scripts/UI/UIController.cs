@@ -113,8 +113,8 @@ public class UIController : MonoBehaviour
 
             if (m_StatText)
                 m_StatText.text = "Health: " + m_Stats.GetHealth() + "/" + m_Stats.GetMaxHealth() + "\n" +
-                    "Damage: " + m_Stats.GetDamage() + "\n" +
-                    "Attack Speed: " + m_Stats.GetAttackSpeed();
+                    "Damage: " + m_Stats.GetMinDamage() + "-" + m_Stats.GetMaxDamage() + "\n" +
+                    "Attack Speed: " + m_Stats.GetAttackSpeed().ToString("F2");
         }
     }
 

@@ -14,6 +14,7 @@ public class CameraFollowPlayer : MonoBehaviour
 	
 	void Update()
     {
+        //Follow player position X and Z, Y is constant
         m_Position = m_FollowTransform.position;
         transform.position = new Vector3(m_Position.x, 10, m_Position.z);
 	}

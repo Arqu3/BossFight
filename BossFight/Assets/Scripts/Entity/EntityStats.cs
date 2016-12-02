@@ -6,13 +6,13 @@ public class EntityStats : MonoBehaviour
     //Public vars
     public int m_MaxHealth = 100;
     public float m_HealthMulti = 1.0f;
-    public int m_Damage = 10;
+    public int m_MinDamage = 5;
+    public int m_MaxDamage = 10;
     public float m_DamageMulti = 1.0f;
     public float m_MovementSpeed = 8.0f;
     public float m_MovementMulti = 1.0f;
     public float m_AttackSpeed = 1.0f;
     public float m_AttackSpeedMulti = 1.0f;
-    public float m_AttackTime = 0.4f;
     public float m_AggroRange = 10.0f;
     public float m_AttackRange = 2.0f;
     public float m_KnockbackForce = 3.0f;
@@ -24,6 +24,7 @@ public class EntityStats : MonoBehaviour
     public bool m_CanBeStunned = true;
     public float m_StunAmount = 1.0f;
     public float m_StunReduction = 0.0f;
+    public float m_MovementIdleTime = 3.0f;
 
     //Health vars
     int m_CurHealth;
@@ -43,6 +44,9 @@ public class EntityStats : MonoBehaviour
     float m_CurStunDur = 0.0f;
     float m_StunDuration = 0.0f;
 
+    //Idle move vars
+    bool m_IsIdle = false;
+
     void Awake()
     {
         m_CurHealth = m_MaxHealth;
@@ -50,6 +54,8 @@ public class EntityStats : MonoBehaviour
 
     void Start()
     {
+        m_MinDamage = Mathf.Clamp(m_MinDamage, 0, m_MaxDamage);
+
         m_Healthbar = transform.FindChild("Healthbar").GetComponent<Healthbar>();
 
         if (!m_Healthbar)
@@ -73,6 +79,7 @@ public class EntityStats : MonoBehaviour
 
     void ColorUpdate()
     {
+        //Toggle color when damage is taken
         if (m_IsDamaged)
         {
             m_CurDMGTimer += Time.deltaTime;
@@ -88,20 +95,37 @@ public class EntityStats : MonoBehaviour
     //Damage vars
     public void SetDamage(int val)
     {
-        m_Damage = val;
+        m_MaxDamage = val;
     }
-    public void AddDamage(int val)
+    public void AddMinDamage(int val)
     {
-        m_Damage += val;
+        m_MinDamage += val;
+    }
+    public int GetMinDamage()
+    {
+        return (int)(m_MinDamage * m_DamageMulti); 
+    }
+    public void AddMaxDamage(int val)
+    {
+        m_MaxDamage += val;
+    }
+    public int GetMaxDamage()
+    {
+        return (int)(m_MaxDamage * m_DamageMulti);
     }
     public int GetDamage()
     {
-        return (int)(m_Damage * m_DamageMulti);
+        m_MaxDamage = Mathf.Clamp(m_MaxDamage, 0, 10000);
+        m_MinDamage = Mathf.Clamp(m_MinDamage, 0, m_MaxDamage);
+        int damage = (int)(Random.Range(m_MinDamage, m_MaxDamage + 1) * m_DamageMulti);
+        //Debug.Log(damage);
+        return damage;
     }
 
     //Health functions
     public void ChangeHealth(int val)
     {
+        //Changes health, clamps it from 0 to maxvalue
         if (m_CurHealth > 0 && m_CurHealth <= m_MaxHealth)
         {
             m_IsDamaged = true;
@@ -112,12 +136,14 @@ public class EntityStats : MonoBehaviour
             if (temp < m_CurHealth)
                 lost = true;
 
+            //If entity took damage and cantakedamage is true, change health
             if (lost && m_CanTakeDamage)
             {
                 m_CurHealth += val;
                 if (m_Healthbar)
                     m_Healthbar.ChangeScale(val);
             }
+            //If value was positive, add health
             else if (!lost)
             {
                 m_CurHealth += val;
@@ -125,20 +151,15 @@ public class EntityStats : MonoBehaviour
                     m_Healthbar.ChangeScale(val);
             }
 
-            if (m_CurHealth > m_MaxHealth)
-                m_CurHealth = m_MaxHealth;
+            //Clamp health
+            m_CurHealth = Mathf.Clamp(m_CurHealth, 0, GetMaxHealth());
 
+            //What happens when player dies
             if (m_CurHealth < 1 && GetCanDie())
             {
-                if (gameObject.tag == "Enemy")
-                {
-                    //SceneController.m_CurrentEnemyAmount--;
-                    //Destroy(this.gameObject);
-                }
-                else if (gameObject.tag == "Player")
+                if (gameObject.tag == "Player")
                     Debug.Log("Player is dead!");
             }
-
             //Debug.Log("Entity " + gameObject.name + " has " + m_CurHealth + " health left");
         }
     }
@@ -181,6 +202,24 @@ public class EntityStats : MonoBehaviour
         m_MovementSpeed += value;
     }
 
+    //Idle functions
+    public bool GetIdle()
+    {
+        return m_IsIdle;
+    }
+    public void SetIdle(bool state)
+    {
+        m_IsIdle = state;
+    }
+    public float GetIdleTime()
+    {
+        return m_MovementIdleTime;
+    }
+    public void SetIdleTime(float time)
+    {
+        m_MovementIdleTime = time;
+    }
+
 
     //Attackspeed functions
     public float GetAttackSpeed()
@@ -189,23 +228,15 @@ public class EntityStats : MonoBehaviour
     }
     public float GetAttackTime()
     {
-        return m_AttackTime;
+        return GetAttackSpeed() * 0.85f;
     }
     public void SetAttackSpeed(float value)
     {
         m_AttackSpeed = value;
     }
-    public void SetAttackTime(float value)
-    {
-        m_AttackTime = value;
-    }
     public void AddAttackSpeed(float value)
     {
         m_AttackSpeed += value;
-    }
-    public void AddAttackTime(float value)
-    {
-        m_AttackTime += value;
     }
 
     //Aggro functions

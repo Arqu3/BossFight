@@ -17,6 +17,7 @@ public class CarrotRifle : Weapon
 
     //Cooldown vars
     bool m_IsReloading = false;
+    float m_TimeSinceLast = 0.0f;
     float m_CurReload;
     float m_CurFire;
     int m_CurAmmo;
@@ -39,59 +40,83 @@ public class CarrotRifle : Weapon
 	
 	void Update ()
     {
-        if (GetIsEquiped())
+	}
+
+    public override void Attack()
+    {
+        if (!m_IsReloading)
+        {
+            m_AmmoBar.gameObject.SetActive(true);
+            if (m_CurFire >= m_FireRate && m_CurAmmo > 0)
+            {
+                Shoot();
+                m_TimeSinceLast = 0.0f;
+                m_CurAmmo--;
+                m_CurFire = 0.0f;
+                m_AmmoBar.ChangeScale(-1);
+            }
+        }
+    }
+
+    public override void AttackUpdate(float attackSpeed, float attackTime)
+    {
+        //Reload if ammo is <= 0
+        if (m_CurAmmo <= 0)
+            m_IsReloading = true;
+        else
         {
             if (!m_IsReloading)
             {
-                if (Input.GetKey(KeyCode.F))
+                if (m_CurAmmo < m_Ammo)
                 {
-                    m_AmmoBar.gameObject.SetActive(true);
-                    if (m_CurFire >= m_FireRate && m_CurAmmo > 0)
+                    m_TimeSinceLast += Time.deltaTime;
+                    if (m_TimeSinceLast > 1.5f)
                     {
-                        Shoot();
-                        m_CurAmmo--;
-                        m_CurFire = 0.0f;
-                        m_AmmoBar.ChangeScale(-1);
-                    }
-                }
-                else if (Input.GetKeyDown(KeyCode.G))
-                {
-                    m_AmmoBar.gameObject.SetActive(true);
-                    if (m_CurAmmo > 0)
-                    {
-                        Eat();
-                        m_CurAmmo--;
-                        m_AmmoBar.ChangeScale(-1);
+                        m_TimeSinceLast = 0.0f;
+                        m_IsReloading = true;
                     }
                 }
                 else
-                    m_AmmoBar.gameObject.SetActive(false);
+                    m_TimeSinceLast = 0.0f;
             }
-            else
-                m_AmmoBar.gameObject.SetActive(false);
-
-            if (m_CurAmmo <= 0)
-                m_IsReloading = true;
-
-            if (m_IsReloading)
-            {
-                m_CurReload -= Time.deltaTime;
-                if (m_CurReload <= 0.0f)
-                {
-                    m_CurReload = m_ReloadTime;
-                    m_IsReloading = false;
-                    m_CurAmmo = m_Ammo;
-                    m_AmmoBar.SetScale(m_CurAmmo);
-                }
-            }
-
-            if (m_CurFire < m_FireRate)
-                m_CurFire += Time.deltaTime;
-            m_CurFire = Mathf.Clamp(m_CurFire, 0.0f, m_FireRate);
-
-            Debug.Log(m_CurAmmo);
         }
-	}
+
+        //Reload cooldown etc
+        if (m_IsReloading)
+        {
+            m_CurReload -= Time.deltaTime;
+            if (m_CurReload <= 0.0f)
+            {
+                m_CurReload = m_ReloadTime;
+                m_IsReloading = false;
+                m_CurAmmo = m_Ammo;
+                m_AmmoBar.SetScale(m_CurAmmo);
+            }
+        }
+
+        //Firerate
+        if (m_CurFire < m_FireRate)
+            m_CurFire += Time.deltaTime;
+        m_CurFire = Mathf.Clamp(m_CurFire, 0.0f, m_FireRate);
+    }
+
+    public override void SpecialAttack(float charge)
+    {
+        if (!m_IsReloading)
+        {
+            m_AmmoBar.gameObject.SetActive(true);
+            if (m_CurAmmo > 0)
+            {
+                Eat();
+                m_AmmoBar.SetScale(0);
+            }
+        }
+    }
+
+    public override void SpecialAttackUpdate(float attackSpeed, float attackTime)
+    {
+
+    }
 
     public int GetBonusDamage()
     {
@@ -110,9 +135,11 @@ public class CarrotRifle : Weapon
 
     void Shoot()
     {
+        //Create projectile clone
         GameObject clone = (GameObject)Instantiate(m_Projectile, transform.position, Quaternion.identity);
         if (clone.GetComponent<Projectile>())
         {
+            //Set specific projectile values
             clone.GetComponent<Projectile>().m_TotalDamage = m_Stats.GetDamage();
             clone.GetComponent<Projectile>().m_Mode = ProjectileMode.Player;
 
@@ -123,8 +150,16 @@ public class CarrotRifle : Weapon
                 clone.GetComponent<Projectile>().m_OnDestroySpawn = m_Carrot;
         }
     }
+
+    //Add health depending on how much ammo is left
     void Eat()
     {
-        m_Stats.ChangeHealth(m_HealthAmount);
+        m_Stats.ChangeHealth(m_HealthAmount * m_CurAmmo);
+        m_CurAmmo = 0;
+    }
+
+    public override bool GetSpecialButton()
+    {
+        return !Input.GetMouseButton(1);
     }
 }
